@@ -3,7 +3,13 @@ services:
     name: sistema-matematica
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn flask_migration.app:app
+    startCommand: gunicorn --chdir flask_migration app:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: SECRET_KEY
+        generateValue: true
+    disk:
+      name: dados
+      mountPath: /opt/render/project/src/dados
+      sizeGB: 1
