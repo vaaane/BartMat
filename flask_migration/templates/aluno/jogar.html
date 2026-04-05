@@ -1,0 +1,514 @@
+{% extends "base.html" %}
+{% block title %}{{ jogo.nome }}{% endblock %}
+{% block page_title %}{{ jogo.nome }}{% endblock %}
+{% block page_subtitle %}
+  Turma {{ jogo.turma }}
+  &nbsp;·&nbsp; Tipo: {{ LABEL_TIPO.get(jogo.tipo, jogo.tipo) }}
+  &nbsp;·&nbsp; {{ jogo.tempo_maximo // 60 }} min
+{% endblock %}
+
+{% block topbar_right %}
+<div style="display:flex;align-items:center;gap:12px">
+  <div id="timer-display" style="
+    font-size:17px;font-weight:800;color:var(--blue);
+    background:var(--blue-pale);border:1.5px solid #BAE6FD;
+    padding:6px 14px;border-radius:8px;font-variant-numeric:tabular-nums;
+    min-width:90px;text-align:center;">
+    --:--
+  </div>
+</div>
+{% endblock %}
+
+{% block head %}
+<style>
+  /* ── Modal de saída ── */
+  #exit-modal {
+    display: none; position: fixed; inset: 0; z-index: 9999;
+    align-items: center; justify-content: center;
+  }
+  .exit-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,.45); backdrop-filter: blur(3px);
+  }
+  .exit-box {
+    position: relative; background: var(--card);
+    border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    padding: 32px 36px; max-width: 400px; width: 90%;
+    text-align: center; animation: exitIn .18s ease-out;
+  }
+  @keyframes exitIn {
+    from { transform: scale(.92); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+  .exit-icon { font-size: 42px; margin-bottom: 12px; }
+  .exit-box h3 { font-size: 18px; font-weight: 800; margin-bottom: 10px; color: var(--text); }
+  .exit-box p  { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 22px; }
+  .exit-btns   { display: flex; flex-direction: column; gap: 10px; }
+</style>
+<style>
+  /* Progresso */
+  .game-progress {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 20px; padding: 14px 18px;
+    background: var(--card); border-radius: var(--radius);
+    border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  }
+  .gp-label   { font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
+  .gp-bar     { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .gp-fill    { height: 100%; border-radius: 4px; background: var(--blue); transition: width .4s; }
+  .gp-pts     { font-size: 14px; font-weight: 800; color: var(--gold); flex-shrink: 0; }
+
+  /* Layout jogo */
+  .game-layout { display: grid; grid-template-columns: 220px 1fr; gap: 18px; }
+
+  /* Painel lateral */
+  .game-side { display: flex; flex-direction: column; gap: 12px; }
+  .side-card  {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow-sm);
+    padding: 16px;
+  }
+  .side-label { font-size: 10px; font-weight: 700; text-transform: uppercase;
+                letter-spacing: .5px; color: var(--text-muted); margin-bottom: 6px; }
+  .side-value { font-size: 22px; font-weight: 800; }
+  .side-sub   { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Card da questão */
+  .question-card {
+    background: var(--card); border: 1.5px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 28px 28px 20px;
+  }
+  .q-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .q-badge.facil   { background: #DCFCE7; color: #15803D; }
+  .q-badge.media   { background: #FEF9C3; color: #854D0E; }
+  .q-badge.dificil { background: #FEE2E2; color: #B91C1C; }
+
+  .q-text {
+    font-size: 20px; font-weight: 700; line-height: 1.4;
+    color: var(--text); margin-bottom: 22px;
+  }
+
+  .answer-area { display: flex; gap: 10px; margin-bottom: 14px; }
+  .answer-area .input { flex: 1; font-size: 16px; }
+  .answer-area .btn   { flex-shrink: 0; }
+
+  /* Alternativas (após ajuda) */
+  .alts-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+    margin-bottom: 14px;
+  }
+  .alt-btn {
+    padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--border);
+    background: var(--bg); font-size: 14px; font-weight: 600;
+    cursor: pointer; text-align: center;
+    transition: background .12s, border-color .12s;
+  }
+  .alt-btn:hover  { background: var(--blue-pale); border-color: var(--blue); }
+  .alt-btn:active { transform: scale(.97); }
+
+  /* Feedback */
+  #feedback {
+    min-height: 42px; display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    transition: all .2s;
+  }
+  #feedback.ok  { background: #F0FDF4; color: #15803D; border: 1px solid #BBF7D0; }
+  #feedback.err { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; }
+  #feedback.hidden { opacity: 0; }
+
+  /* Tentativas indicator */
+  .tent-dots { display: flex; gap: 5px; margin-top: 8px; }
+  .tent-dot  {
+    width: 10px; height: 10px; border-radius: 50%;
+    border: 2px solid var(--border); background: transparent;
+    transition: background .2s;
+  }
+  .tent-dot.used  { background: var(--red); border-color: var(--red); }
+  .tent-dot.avail { background: var(--green); border-color: var(--green); }
+
+  @media (max-width: 700px) {
+    .game-layout { grid-template-columns: 1fr; }
+    .game-side   { flex-direction: row; flex-wrap: wrap; }
+    .side-card   { flex: 1; min-width: 130px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Barra de progresso (tempo) -->
+<div class="game-progress">
+  <span class="gp-label">
+    Questão #{{ num }}
+    &nbsp;·&nbsp;
+    <span id="resp-count">{{ jogo.respondidas }}</span> respondidas
+  </span>
+  <div class="gp-bar"><div class="gp-fill" id="gp-fill" style="width:0%"></div></div>
+  <span class="gp-pts" id="pts-display">{{ jogo.pontuacao }} pts</span>
+</div>
+
+<!-- Layout principal -->
+<div class="game-layout">
+
+  <!-- Painel lateral -->
+  <div class="game-side">
+
+    <div class="side-card">
+      <div class="side-label">Pontuação</div>
+      <div class="side-value" style="color:var(--gold)" id="pts-side">{{ jogo.pontuacao }}</div>
+      <div class="side-sub">pontos acumulados</div>
+    </div>
+
+    <div class="side-card">
+      <div class="side-label">Nível</div>
+      <div class="side-value" style="color:var(--{{ nivel_cor }})" id="nivel-display">{{ nivel }}</div>
+      <div class="side-sub">Vale <span id="vale-display">{{ vale }}</span> pts agora</div>
+      <div class="tent-dots" id="tent-dots">
+        {% for i in range(4) %}
+        <div class="tent-dot {% if i < jogo.tentativas %}used{% else %}avail{% endif %}"
+             id="dot-{{ i }}"></div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="side-card">
+      <div class="side-label">Placar</div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <div>
+          <div class="side-value" style="color:var(--green);font-size:18px">{{ jogo.acertos }}</div>
+          <div class="side-sub">acertos</div>
+        </div>
+        <div style="color:var(--border);font-size:20px">·</div>
+        <div>
+          <div class="side-value" style="color:var(--red);font-size:18px">{{ jogo.erros }}</div>
+          <div class="side-sub">erros</div>
+        </div>
+      </div>
+    </div>
+
+    {% if not jogo.ajuda_usada %}
+    <button class="btn btn-ghost" id="btn-ajuda" onclick="pedirAjuda()" style="width:100%">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10
+        10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45
+        12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41
+        0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+      Pedir ajuda (-50%)
+    </button>
+    {% else %}
+    <div class="side-card" style="text-align:center;color:var(--text-muted);font-size:12px">
+      💡 Ajuda utilizada
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('aluno.jogar_encerrar') }}" id="form-encerrar"
+          onsubmit="return confirm('Encerrar? O resultado parcial será salvo.')">
+      <button type="submit" class="btn btn-ghost" style="width:100%;color:var(--red);border-color:#FECACA">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41
+          10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        Encerrar
+      </button>
+    </form>
+
+  </div>
+
+  <!-- Card da questão -->
+  <div>
+    <div class="question-card">
+      <span class="q-badge {{ 'facil' if perg.dificuldade == 1 else 'media' if perg.dificuldade == 2 else 'dificil' }}">
+        {% if perg.dificuldade == 1 %}● Fácil
+        {% elif perg.dificuldade == 2 %}◆ Média
+        {% else %}■ Difícil{% endif %}
+        &nbsp;·&nbsp; base {{ base }} pts
+      </span>
+
+      <div class="q-text" id="q-text">{{ perg.pergunta }}</div>
+
+      <!-- Input de resposta -->
+      <div id="input-area">
+        <div class="answer-area">
+          <input type="text" id="resposta-input" class="input"
+                 placeholder="Digite sua resposta…" autocomplete="off"
+                 autofocus
+                 onkeydown="if(event.key==='Enter')responder()" />
+          <button class="btn btn-blue" id="btn-responder" onclick="responder()">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            Responder
+          </button>
+        </div>
+      </div>
+
+      <!-- Alternativas (aparece após ajuda) -->
+      <div id="alts-area" style="display:none">
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">
+          💡 Escolha a alternativa correta:
+        </p>
+        <div class="alts-grid" id="alts-grid"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div id="feedback" class="hidden"></div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const TEMPO_MAXIMO  = {{ jogo.tempo_maximo }};
+const INICIO_TS     = {{ jogo.inicio_ts }};  // Unix timestamp (segundos)
+const TENTATIVAS_INIT = {{ jogo.tentativas }};
+let tentativas = TENTATIVAS_INIT;
+let ajudaUsada = {{ 'true' if jogo.ajuda_usada else 'false' }};
+let processando = false;
+
+// ── Guarda de saída ────────────────────────────────────────
+// Sinaliza navegação intencional (sem pedir confirmação)
+function _sairSemConfirmar() {
+  window.removeEventListener('beforeunload', _beforeunload);
+  _modal.style.display = 'none';
+}
+
+function _beforeunload(e) {
+  e.preventDefault();
+  e.returnValue = '';
+}
+window.addEventListener('beforeunload', _beforeunload);
+
+// ── Modal de confirmação ───────────────────────────────────
+const _modal = document.createElement('div');
+_modal.id = 'exit-modal';
+_modal.innerHTML = `
+  <div class="exit-overlay"></div>
+  <div class="exit-box">
+    <div class="exit-icon">⚠️</div>
+    <h3>Sair da atividade?</h3>
+    <p>A atividade será encerrada e o resultado parcial será salvo.<br>Você não poderá retornar a esta sessão.</p>
+    <div class="exit-btns">
+      <button id="exit-continuar" class="btn btn-blue" style="justify-content:center">
+        Continuar jogando
+      </button>
+      <button id="exit-sair" class="btn btn-ghost" style="color:var(--red);border-color:#FECACA;justify-content:center">
+        Encerrar e sair
+      </button>
+    </div>
+  </div>
+`;
+document.body.appendChild(_modal);
+
+let _navDest = null;
+
+function _mostrarModal(dest) {
+  _navDest = dest;
+  const p = _modal.querySelector('.exit-box p');
+  if (dest === '__encerrar__') {
+    const decorrido = (Date.now() / 1000) - INICIO_TS;
+    const restante  = Math.max(0, TEMPO_MAXIMO - decorrido);
+    const m = Math.floor(restante / 60);
+    const s = Math.floor(restante % 60);
+    const tempoStr = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    p.innerHTML = `Ainda faltam <strong>${tempoStr}</strong> para encerrar automaticamente.<br>
+      O resultado parcial será salvo. Deseja encerrar mesmo assim?`;
+  } else {
+    p.innerHTML = 'A atividade será encerrada e o resultado parcial será salvo.<br>Você não poderá retornar a esta sessão.';
+  }
+  _modal.style.display = 'flex';
+}
+
+document.getElementById('exit-continuar').addEventListener('click', () => {
+  _modal.style.display = 'none';
+  _navDest = null;
+});
+
+document.getElementById('exit-sair').addEventListener('click', () => {
+  _sairSemConfirmar();
+  if (_navDest === '__encerrar__') {
+    document.getElementById('form-encerrar').onsubmit = null;
+    document.getElementById('form-encerrar').submit();
+  } else if (_navDest) {
+    window.location.href = _navDest;
+  }
+});
+
+// Interceptar TODOS os cliques em links da página
+document.addEventListener('click', function(e) {
+  const link = e.target.closest('a[href]');
+  if (!link) return;
+  const href = link.getAttribute('href');
+  if (!href || href === '#' || href.startsWith('#')) return;
+  e.preventDefault();
+  e.stopPropagation();
+  _mostrarModal(href);
+}, true);
+
+// Botão "Encerrar" usa o modal em vez do confirm nativo
+document.getElementById('form-encerrar').onsubmit = function(e) {
+  e.preventDefault();
+  _mostrarModal('__encerrar__');
+};
+
+// ── Timer ──────────────────────────────────────────────────
+function atualizarTimer() {
+  const decorrido = (Date.now() / 1000) - INICIO_TS;
+  const restante  = Math.max(0, TEMPO_MAXIMO - decorrido);
+  const m = Math.floor(restante / 60);
+  const s = Math.floor(restante % 60);
+  const disp = document.getElementById('timer-display');
+  disp.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+  // Barra de tempo
+  const pct  = Math.min(100, (decorrido / TEMPO_MAXIMO) * 100);
+  const fill = document.getElementById('gp-fill');
+  if (fill) {
+    fill.style.width = pct + '%';
+    fill.style.background = restante <= 60 ? 'var(--red)'
+                          : restante <= 120 ? 'var(--orange)'
+                          : 'var(--blue)';
+  }
+
+  if (restante <= 60) {
+    disp.style.color = 'var(--red)';
+    disp.style.background = '#FEF2F2';
+    disp.style.borderColor = '#FECACA';
+  } else if (restante <= 120) {
+    disp.style.color = 'var(--orange)';
+  }
+
+  if (restante <= 0) {
+    // Tempo esgotado — submete sem confirmação
+    _sairSemConfirmar();
+    document.getElementById('form-encerrar').onsubmit = null;
+    document.getElementById('form-encerrar').submit();
+  }
+}
+setInterval(atualizarTimer, 1000);
+atualizarTimer();
+
+// ── Áudio ──────────────────────────────────────────────────
+function beep(freq, dur) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur/1000);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + dur/1000);
+  } catch(e) {}
+}
+
+// ── Dots de tentativas ─────────────────────────────────────
+function atualizarDots(n) {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('dot-' + i);
+    if (!d) continue;
+    d.className = 'tent-dot ' + (i < n ? 'used' : 'avail');
+  }
+}
+
+// ── Responder ──────────────────────────────────────────────
+async function responder(respSelecionada) {
+  if (processando) return;
+  const input = document.getElementById('resposta-input');
+  const resposta = respSelecionada !== undefined ? respSelecionada : (input ? input.value.trim() : '');
+  if (!resposta) {
+    mostrarFeedback('err', '⚠️ Digite uma resposta.');
+    return;
+  }
+
+  processando = true;
+  const btn = document.getElementById('btn-responder');
+  if (btn) btn.disabled = true;
+
+  const res = await fetch('{{ url_for("aluno.jogar_responder") }}', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({resposta}),
+  });
+  const data = await res.json();
+
+  if (data.tempo_esgotado) {
+    _sairSemConfirmar();
+    document.getElementById('form-encerrar').onsubmit = null;
+    document.getElementById('form-encerrar').submit();
+    return;
+  }
+
+  if (data.acertou) {
+    beep(1000, 150);
+    mostrarFeedback('ok', `✅ ${data.msg}`);
+    // Atualiza pts no topo e lateral
+    document.getElementById('pts-display').textContent = data.pontuacao + ' pts';
+    document.getElementById('pts-side').textContent = data.pontuacao;
+    setTimeout(() => { _sairSemConfirmar(); window.location.reload(); }, 1500);
+
+  } else if (data.esgotou) {
+    beep(400, 300);
+    mostrarFeedback('err', `❌ ${data.msg}`);
+    tentativas = 4;
+    atualizarDots(4);
+    setTimeout(() => { _sairSemConfirmar(); window.location.reload(); }, 2000);
+
+  } else {
+    beep(400, 150);
+    tentativas = data.tentativas;
+    atualizarDots(tentativas);
+    mostrarFeedback('err', `❌ ${data.msg}`);
+    // Atualiza valor
+    document.querySelector('#vale-display').textContent = data.vale;
+    if (btn) btn.disabled = false;
+    if (input) { input.value = ''; input.focus(); }
+    processando = false;
+  }
+}
+
+// ── Ajuda ──────────────────────────────────────────────────
+async function pedirAjuda() {
+  const res = await fetch('{{ url_for("aluno.jogar_ajuda") }}', {method: 'POST'});
+  if (!res.ok) return;
+  const data = await res.json();
+  if (data.erro) { mostrarFeedback('err', '⚠️ ' + data.erro); return; }
+
+  ajudaUsada = true;
+  document.getElementById('btn-ajuda')?.remove();
+
+  // Mostra alternativas
+  const grid = document.getElementById('alts-grid');
+  grid.innerHTML = '';
+  data.alternativas.forEach(alt => {
+    const btn = document.createElement('button');
+    btn.className = 'alt-btn';
+    btn.textContent = alt;
+    btn.onclick = () => {
+      document.getElementById('resposta-input').value = alt;
+      responder(alt);
+    };
+    grid.appendChild(btn);
+  });
+  document.getElementById('alts-area').style.display = 'block';
+  document.getElementById('input-area').style.display = 'none';
+  mostrarFeedback('ok', '💡 Alternativas exibidas — pontuação reduzida 50%');
+}
+
+function mostrarFeedback(tipo, msg) {
+  const el = document.getElementById('feedback');
+  el.className = tipo;
+  el.textContent = msg;
+}
+
+// Enter no input
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('resposta-input');
+  if (inp) inp.focus();
+  atualizarDots(TENTATIVAS_INIT);
+});
+</script>
+{% endblock %}

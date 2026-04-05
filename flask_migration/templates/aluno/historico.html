@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Histórico — Aluno{% endblock %}
+{% block page_title %}Meu Histórico{% endblock %}
+{% block page_subtitle %}Turma {{ turma }} · Todas as atividades realizadas{% endblock %}
+
+{% block head %}
+<style>
+  .aluno-section { margin-bottom: 28px; }
+  .aluno-section:last-child { margin-bottom: 0; }
+
+  .aluno-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px;
+  }
+  .aluno-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--orange), #FF9A5C);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .aluno-header-name { font-size: 15px; font-weight: 700; }
+  .aluno-header-sub  { font-size: 12px; color: var(--text-muted); }
+
+  /* Result accordion */
+  .result-card { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 10px; }
+  .result-card:last-child { margin-bottom: 0; }
+
+  .result-summary {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px; background: #fff; cursor: pointer;
+    list-style: none; user-select: none;
+  }
+  .result-summary:hover { background: #FAFAFA; }
+  details[open] .result-summary { background: var(--bg); border-bottom: 1px solid var(--border); }
+
+  .result-ativ { font-size: 14px; font-weight: 700; flex: 1; }
+  .result-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .result-pts  { font-size: 18px; font-weight: 800; color: var(--gold); }
+  .chevron     { width: 18px; height: 18px; fill: var(--text-muted); transition: transform .2s; flex-shrink: 0; }
+  details[open] .chevron { transform: rotate(180deg); }
+
+  /* Questões */
+  .questoes-body { padding: 14px 16px; }
+  .q-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 12px; border-radius: 8px;
+    border: 1px solid var(--border); margin-bottom: 7px; font-size: 13px;
+  }
+  .q-row:last-child { margin-bottom: 0; }
+  .q-row.ok  { background: #F0FDF4; border-color: #BBF7D0; }
+  .q-row.err { background: #FEF2F2; border-color: #FECACA; }
+  .q-num     { font-size: 11px; font-weight: 700; color: var(--text-muted); width: 24px; flex-shrink: 0; }
+  .q-perg    { flex: 1; font-weight: 500; }
+  .q-resp-ok  { color: var(--green); font-weight: 600; font-size: 12px; }
+  .q-resp-err { color: var(--red);   font-weight: 600; font-size: 12px; }
+  .q-correta  { font-size: 11px; color: var(--text-muted); }
+  .q-tent     { font-size: 11px; color: var(--text-muted); width: 26px; text-align: right; flex-shrink: 0; }
+
+  /* Stat mini strip */
+  .stat-strip {
+    display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .stat-strip-item { text-align: center; }
+  .stat-strip-value { font-size: 22px; font-weight: 800; line-height: 1; }
+  .stat-strip-label { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% for aluno in alunos %}
+{% set regs = historico_por_aluno[aluno] %}
+<div class="aluno-section">
+
+  <!-- Header do aluno -->
+  <div class="aluno-header">
+    <div class="aluno-avatar">{{ aluno[0]|upper }}</div>
+    <div>
+      <div class="aluno-header-name">{{ aluno }}</div>
+      <div class="aluno-header-sub">{{ regs|length }} atividade{{ 's' if regs|length != 1 }} realizadas</div>
+    </div>
+  </div>
+
+  {% if regs %}
+    <!-- Resumo rápido -->
+    {% set total_pts = regs | sum(attribute='pontuacao') %}
+    {% set total_ac  = regs | sum(attribute='acertos') %}
+    {% set total_err = regs | sum(attribute='erros') %}
+    <div class="stat-strip" style="margin-left:44px">
+      <div class="stat-strip-item">
+        <div class="stat-strip-value" style="color:var(--gold)">{{ total_pts }}</div>
+        <div class="stat-strip-label">Total pts</div>
+      </div>
+      <div class="stat-strip-item">
+        <div class="stat-strip-value" style="color:var(--green)">{{ total_ac }}</div>
+        <div class="stat-strip-label">Acertos</div>
+      </div>
+      <div class="stat-strip-item">
+        <div class="stat-strip-value" style="color:var(--red)">{{ total_err }}</div>
+        <div class="stat-strip-label">Erros</div>
+      </div>
+      <div class="stat-strip-item">
+        <div class="stat-strip-value" style="color:var(--blue)">
+          {{ ((total_ac / (total_ac + total_err)) * 100)|round|int if (total_ac + total_err) > 0 else 0 }}%
+        </div>
+        <div class="stat-strip-label">Aproveit.</div>
+      </div>
+    </div>
+
+    <!-- Lista de resultados -->
+    {% for r in regs %}
+    <div class="result-card">
+      <details>
+        <summary class="result-summary">
+          <div style="flex:1">
+            <div class="result-ativ">{{ r.atividade }}</div>
+            <div class="result-meta">
+              {{ r.data }} &nbsp;·&nbsp; {{ r.acertos }} acertos &nbsp;·&nbsp;
+              {{ r.erros }} erros &nbsp;·&nbsp; {{ r.tempo }}
+              {% if r.atraso %}&nbsp;·&nbsp; <span style="color:var(--orange)">Atividade com atraso</span>{% endif %}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="result-pts">{{ r.pontuacao }} pts</div>
+            <svg class="chevron" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </div>
+        </summary>
+
+        <div class="questoes-body">
+          {% if r.detalhes %}
+            {% for q in r.detalhes %}
+            <div class="q-row {% if q.acertou %}ok{% else %}err{% endif %}">
+              <div class="q-num">Q{{ q.numero }}</div>
+              <div class="q-perg">{{ q.pergunta }}</div>
+              <div class="{% if q.acertou %}q-resp-ok{% else %}q-resp-err{% endif %}">
+                {{ q.resposta_aluno }}
+              </div>
+              {% if not q.acertou %}
+              <div class="q-correta">✓ {{ q.resposta_correta }}</div>
+              {% endif %}
+              <div class="q-tent">{{ q.tentativas }}x</div>
+              <div>{% if q.acertou %}✅{% else %}❌{% endif %}</div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <p style="font-size:13px;color:var(--text-muted)">Sem detalhes disponíveis.</p>
+          {% endif %}
+        </div>
+      </details>
+    </div>
+    {% endfor %}
+
+  {% else %}
+    <div class="card" style="margin-left:44px">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1
+          0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2
+          v-4H9V9h4V5h2v4h4v2z"/></svg>
+        <p>Nenhuma atividade realizada ainda.</p>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endfor %}
+
+{% endblock %}

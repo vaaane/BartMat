@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Início — Sistema de Matemática{% endblock %}
+
+{% block page_title %}
+  Olá{% if alunos %}, {{ alunos[0] }}{% if alunos|length > 1 %} e {{ alunos[1] }}{% endif %}! 👋{% endif %}
+{% endblock %}
+{% block page_subtitle %}Turma {{ turma }} · Bom trabalho hoje!{% endblock %}
+
+{% block head %}
+<style>
+  /* ── Atividade liberada ── */
+  .ativ-liberada {
+    display: flex; align-items: center; gap: 16px;
+    padding: 18px 20px;
+    background: linear-gradient(135deg, #EBF6FD, #F0F9FF);
+    border: 1.5px solid #BAE6FD; border-radius: var(--radius);
+  }
+  .ativ-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: var(--blue);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .ativ-icon svg { width: 26px; height: 26px; fill: #fff; }
+  .ativ-info { flex: 1; }
+  .ativ-info h3 { font-size: 15px; font-weight: 700; }
+  .ativ-info p  { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+  .ativ-vazia {
+    display: flex; align-items: center; gap: 12px;
+    padding: 18px 20px;
+    background: var(--bg); border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted); font-size: 13px;
+  }
+  .ativ-vazia svg { width: 22px; height: 22px; fill: var(--border); flex-shrink: 0; }
+
+  /* ── Histórico ── */
+  .hist-aluno-label {
+    display: flex; align-items: center; gap: 7px;
+    margin: 14px 0 8px; font-size: 12px; font-weight: 700; color: var(--text-muted);
+  }
+  .hist-aluno-label:first-child { margin-top: 0; }
+  .hist-aluno-label svg { width: 13px; height: 13px; fill: currentColor; }
+
+  .hist-check {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--green-pale);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .hist-check svg { width: 13px; height: 13px; fill: var(--green); }
+  .hist-nome { flex: 1; font-size: 13px; font-weight: 600; }
+  .hist-pts  { font-size: 13px; font-weight: 700; color: var(--gold); }
+  .hist-data { font-size: 11px; color: var(--text-muted); }
+
+  /* ── Resumo ── */
+  .resumo-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, var(--orange-pale), #fff);
+    border-bottom: 1px solid var(--border);
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .resumo-header svg { width: 15px; height: 15px; fill: var(--orange); }
+  .resumo-header span { font-size: 13px; font-weight: 700; }
+  .resumo-wrap { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 14px; }
+  .resumo-wrap:last-child { margin-bottom: 0; }
+
+  /* ── Atividades chip ── */
+  .ativ-chip {
+    display: flex; align-items: center; gap: 7px;
+    padding: 9px 12px; border-radius: 9px;
+    border: 1.5px solid var(--border); background: #fff;
+    font-size: 12px; font-weight: 500; color: var(--text-muted);
+  }
+  .ativ-chip svg { width: 13px; height: 13px; fill: var(--border); }
+  .ativ-chip.liberada { border-color: #BAE6FD; background: var(--blue-pale); color: var(--blue-dark); }
+  .ativ-chip.liberada svg { fill: var(--blue); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="grid-2">
+
+  <!-- ════════════ COLUNA ESQUERDA ════════════ -->
+  <div>
+
+    <!-- Atividade liberada -->
+    <div class="card">
+      <div class="section-label" style="color:#F59E0B">
+        <svg viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>
+        Atividade Liberada
+      </div>
+
+      {% if atividade_liberada %}
+      <div class="ativ-liberada">
+        <div class="ativ-icon"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+        <div class="ativ-info">
+          <h3>{{ atividade_liberada.atividade }}</h3>
+          <p>
+            Tipo:
+            {% if atividade_liberada.tipo == "dia" %}do dia
+            {% elif atividade_liberada.tipo == "anterior" %}anterior
+            {% else %}antiga{% endif %}
+            &nbsp;·&nbsp;{{ (atividade_liberada.tempo_maximo // 60) }} min
+          </p>
+        </div>
+        <a href="{{ url_for('aluno.jogar', nome=atividade_liberada.atividade) }}" class="btn btn-blue">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          Iniciar
+        </a>
+      </div>
+      {% else %}
+      <div class="ativ-vazia">
+        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6
+          c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6
+          9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1
+          3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+        Nenhuma atividade liberada no momento. Aguarde o professor.
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Últimas atividades -->
+    <div class="card">
+      <div class="section-label" style="color:var(--orange)">
+        <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9
+          12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42
+          1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28
+          2.54.72-1.21L13 13.04V8h-1z"/></svg>
+        Últimas Atividades Realizadas
+      </div>
+
+      {% for aluno in alunos %}
+      <div class="hist-aluno-label">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12
+          2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2
+          v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+        {{ aluno }}
+      </div>
+      {% set hist = historico_por_aluno[aluno] %}
+      {% if hist %}
+        {% for r in hist %}
+        <div class="list-row">
+          <div class="hist-check"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42
+            1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg></div>
+          <div class="hist-nome">{{ r.atividade }}</div>
+          <div class="hist-pts">{{ r.pontuacao }} pts</div>
+          <div class="hist-data">{{ r.data }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p style="font-size:13px;color:var(--text-muted);padding:6px 0 10px">
+          Nenhuma atividade realizada ainda.
+        </p>
+      {% endif %}
+      {% endfor %}
+    </div>
+
+  </div>
+
+  <!-- ════════════ COLUNA DIREITA ════════════ -->
+  <div>
+
+    <!-- Resumo de desempenho -->
+    <div class="card">
+      <div class="section-label" style="color:var(--blue)">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14
+          c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12
+          13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47
+          15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+        Resumo de Desempenho
+      </div>
+
+      {% for aluno in alunos %}
+      {% set r = resumo_por_aluno[aluno] %}
+      <div class="resumo-wrap">
+        <div class="resumo-header">
+          <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12
+            2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2
+            v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+          <span>{{ aluno }}</span>
+        </div>
+        <div class="mini-stats">
+          <div class="mini-stat">
+            <div class="mini-stat-value" style="color:var(--gold)">{{ r.total_pts }}</div>
+            <div class="mini-stat-label">Pontos</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-value" style="color:var(--blue)">{{ r.total_ativ }}</div>
+            <div class="mini-stat-label">Atividades</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-value" style="color:var(--orange)">{{ r.media_pts }}</div>
+            <div class="mini-stat-label">Média</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-value" style="color:var(--green)">{{ r.total_acertos }}</div>
+            <div class="mini-stat-label">Acertos</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-value" style="color:var(--red)">{{ r.total_erros }}</div>
+            <div class="mini-stat-label">Erros</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-value" style="color:var(--blue)">
+              {% if r.total_acertos + r.total_erros > 0 %}
+                {{ ((r.total_acertos / (r.total_acertos + r.total_erros)) * 100)|round|int }}%
+              {% else %}—{% endif %}
+            </div>
+            <div class="mini-stat-label">Aproveit.</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Atividades disponíveis -->
+    <div class="card">
+      <div class="section-label">
+        <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1
+          0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2
+          v-4H9V9h4V5h2v4h4v2z"/></svg>
+        Atividades Disponíveis
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        {% for ativ in atividades %}
+        {% set is_lib = atividade_liberada and atividade_liberada.atividade == ativ.nome %}
+        <div class="ativ-chip {% if is_lib %}liberada{% endif %}">
+          <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8
+            c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1
+            9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>
+          {{ ativ.nome }}
+          {% if is_lib %}<span class="badge badge-blue" style="margin-left:auto">Liberada</span>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

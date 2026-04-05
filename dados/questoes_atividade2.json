@@ -1,0 +1,74 @@
+[
+  {
+    "pergunta": "Se x + 3 = 7, quanto vale x?",
+    "resposta": "4",
+    "alternativas": ["3", "4", "5", "10"],
+    "dificuldade": 1
+  },
+  {
+    "pergunta": "Se x - 5 = 2, quanto vale x?",
+    "resposta": "7",
+    "alternativas": ["3", "7", "9", "10"],
+    "dificuldade": 1
+  },
+  {
+    "pergunta": "Se 2x = 10, quanto vale x?",
+    "resposta": "5",
+    "alternativas": ["2", "4", "5", "8"],
+    "dificuldade": 1
+  },
+  {
+    "pergunta": "Se x + 8 = 15, quanto vale x?",
+    "resposta": "7",
+    "alternativas": ["6", "7", "8", "23"],
+    "dificuldade": 1
+  },
+  {
+    "pergunta": "Se 3x = 12, quanto vale x?",
+    "resposta": "4",
+    "alternativas": ["3", "4", "6", "9"],
+    "dificuldade": 1
+  },
+  {
+    "pergunta": "Se 2x + 1 = 9, quanto vale x?",
+    "resposta": "4",
+    "alternativas": ["3", "4", "5", "8"],
+    "dificuldade": 2
+  },
+  {
+    "pergunta": "Se 3x - 4 = 11, quanto vale x?",
+    "resposta": "5",
+    "alternativas": ["4", "5", "6", "7"],
+    "dificuldade": 2
+  },
+  {
+    "pergunta": "Se x/2 + 3 = 7, quanto vale x?",
+    "resposta": "8",
+    "alternativas": ["4", "6", "8", "10"],
+    "dificuldade": 2
+  },
+  {
+    "pergunta": "Se 4x - 6 = 2x + 4, quanto vale x?",
+    "resposta": "5",
+    "alternativas": ["3", "4", "5", "6"],
+    "dificuldade": 2
+  },
+  {
+    "pergunta": "Se x² = 49, qual o valor positivo de x?",
+    "resposta": "7",
+    "alternativas": ["6", "7", "8", "9"],
+    "dificuldade": 3
+  },
+  {
+    "pergunta": "Se 2(x + 3) = 4x - 2, quanto vale x?",
+    "resposta": "4",
+    "alternativas": ["2", "3", "4", "5"],
+    "dificuldade": 3
+  },
+  {
+    "pergunta": "Se 5x + 2 = 3x + 10, quanto vale x?",
+    "resposta": "4",
+    "alternativas": ["3", "4", "5", "6"],
+    "dificuldade": 3
+  }
+]

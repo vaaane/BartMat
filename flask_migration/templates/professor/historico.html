@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Histórico Geral — Professor{% endblock %}
+{% block page_title %}Histórico Geral{% endblock %}
+{% block page_subtitle %}Todos os resultados registrados no sistema{% endblock %}
+
+{% block head %}
+<style>
+  .filter-bar {
+    display: flex; gap: 12px; align-items: flex-end;
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 16px 20px;
+    margin-bottom: 22px; flex-wrap: wrap;
+  }
+  .filter-bar .field { margin: 0; min-width: 160px; flex: 1; }
+
+  .hist-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .hist-table th {
+    text-align: left; padding: 10px 14px; background: var(--bg);
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--text-muted);
+    border-bottom: 2px solid var(--border);
+  }
+  .hist-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .hist-table tr:last-child td { border-bottom: none; }
+  .hist-table tr:hover td { background: #FAFAFA; }
+
+  /* Conquistas */
+  .conquista-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 20px;
+    background: var(--gold-pale); border: 1px solid #FDE68A;
+    font-size: 12px; font-weight: 600; color: #92400E;
+    margin: 3px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Filtros -->
+<form method="GET" action="{{ url_for('professor.historico') }}">
+  <div class="filter-bar">
+    <div class="field">
+      <label class="field-label">Turma</label>
+      <div class="select-wrap">
+        <select name="turma" class="input" onchange="this.form.submit()">
+          {% for t in turmas %}
+          <option value="{{ t }}" {% if t == turma_sel %}selected{% endif %}>
+            {% if t == 'Todas' %}Todas as turmas{% else %}Turma {{ t }}{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Atividade</label>
+      <div class="select-wrap">
+        <select name="atividade" class="input" onchange="this.form.submit()">
+          {% for a in atividades_nomes %}
+          <option value="{{ a }}" {% if a == atividade_sel %}selected{% endif %}>{{ a }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div>
+      <span class="badge badge-blue" style="padding:6px 12px;font-size:12px">
+        {{ dados|length }} resultado{{ 's' if dados|length != 1 }}
+      </span>
+    </div>
+  </div>
+</form>
+
+<!-- Tabela de resultados -->
+<div class="card" style="padding:0;overflow:hidden;margin-bottom:22px">
+  {% if dados %}
+  <table class="hist-table">
+    <thead>
+      <tr>
+        <th>Aluno</th>
+        <th>Turma</th>
+        <th>Atividade</th>
+        <th>Tipo</th>
+        <th style="text-align:right">Pontos</th>
+        <th style="text-align:right">Acertos</th>
+        <th style="text-align:right">Erros</th>
+        <th>Tempo</th>
+        <th>Data</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in dados %}
+      <tr>
+        <td style="font-weight:700">{{ r.aluno }}</td>
+        <td><span class="badge badge-blue">{{ r.turma }}</span></td>
+        <td>{{ r.atividade }}</td>
+        <td>
+          {% if r.atraso %}
+            <span class="badge badge-orange">Atraso</span>
+          {% else %}
+            <span class="badge badge-green">Do dia</span>
+          {% endif %}
+        </td>
+        <td style="text-align:right;font-weight:800;color:var(--gold)">{{ r.pontuacao }}</td>
+        <td style="text-align:right;color:var(--green);font-weight:600">{{ r.acertos }}</td>
+        <td style="text-align:right;color:var(--red);font-weight:600">{{ r.erros }}</td>
+        <td style="font-size:12px;color:var(--text-muted)">{{ r.tempo }}</td>
+        <td style="font-size:12px;color:var(--text-muted)">{{ r.data }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="empty-state" style="padding:48px">
+      <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9
+        12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42
+        1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28
+        2.54.72-1.21L13 13.04V8h-1z"/></svg>
+      <p>Nenhum resultado encontrado.</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Conquistas -->
+{% if conquistas %}
+<div class="card">
+  <div class="card-title" style="margin-bottom:16px;color:var(--gold)">
+    <svg viewBox="0 0 24 24"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55
+      1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33
+      2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zm-15 3V7h2v3.82
+      C4.84 10.4 4 9.3 4 8zm8 6c-1.65 0-3-1.35-3-3V5h6v6c0 1.65-1.35 3-3 3zm7-6
+      c0 1.3-.84 2.4-2 2.82V7h2v1z"/></svg>
+    Conquistas Desbloqueadas
+    <span class="badge badge-gold" style="margin-left:6px">{{ conquistas|length }}</span>
+  </div>
+  <div>
+    {% for c in conquistas %}
+    <span class="conquista-chip">
+      {{ c.descricao }} · <strong>{{ c.aluno }}</strong>
+      <span style="font-weight:400;color:#A16207"> Turma {{ c.turma }} · {{ c.data }}</span>
+    </span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

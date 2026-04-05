@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Matemática — Login</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset & base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange:      #FF7A2F;
+      --orange-dark: #E05A10;
+      --orange-pale: #FFF1EB;
+      --blue:        #2F9EDC;
+      --blue-dark:   #1A7FB8;
+      --blue-pale:   #EBF6FD;
+      --green:       #22C55E;
+      --red:         #EF4444;
+      --bg:          #F4F6FB;
+      --card:        #FFFFFF;
+      --text:        #111827;
+      --text-muted:  #6B7280;
+      --border:      #E5E7EB;
+      --radius:      16px;
+      --shadow:      0 4px 6px -1px rgba(0,0,0,.07),
+                     0 10px 40px -4px rgba(0,0,0,.10);
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ── Background decorativo ───────────────────────────── */
+    body {
+      background-image:
+        radial-gradient(ellipse 900px 600px at 10% 0%,  rgba(255,122,47,.12) 0%, transparent 70%),
+        radial-gradient(ellipse 700px 500px at 90% 100%, rgba(47,158,220,.12) 0%, transparent 70%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    /* ── Card principal ─────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 460px;
+      overflow: hidden;
+    }
+
+    /* ── Header do card ─────────────────────────────────── */
+    .card-header {
+      background: linear-gradient(135deg, var(--orange) 0%, #FF9A5C 100%);
+      padding: 36px 40px 28px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-header::before {
+      content: "";
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 180px; height: 180px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.10);
+    }
+    .card-header::after {
+      content: "";
+      position: absolute;
+      bottom: -60px; left: -30px;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.07);
+    }
+
+    .logo-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.25);
+      margin-bottom: 14px;
+      position: relative; z-index: 1;
+    }
+
+    .logo-icon svg { width: 30px; height: 30px; fill: white; }
+
+    .card-header h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.3px;
+      position: relative; z-index: 1;
+    }
+
+    .card-header p {
+      font-size: 13px;
+      color: rgba(255,255,255,.82);
+      margin-top: 5px;
+      position: relative; z-index: 1;
+    }
+
+    /* ── Tabs ────────────────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      margin: 24px 32px 0;
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px 0;
+      border: none;
+      background: transparent;
+      border-radius: 9px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all .22s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+    }
+
+    .tab-btn svg { width: 16px; height: 16px; transition: fill .22s; }
+
+    .tab-btn.active-aluno {
+      background: var(--orange);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(255,122,47,.35);
+    }
+    .tab-btn.active-aluno svg { fill: #fff; }
+
+    .tab-btn.active-prof {
+      background: var(--blue);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(47,158,220,.35);
+    }
+    .tab-btn.active-prof svg { fill: #fff; }
+
+    .tab-btn:not(.active-aluno):not(.active-prof) svg { fill: var(--text-muted); }
+
+    /* ── Corpo do card ───────────────────────────────────── */
+    .card-body {
+      padding: 24px 32px 32px;
+    }
+
+    /* ── Painéis das tabs ────────────────────────────────── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Labels e inputs ─────────────────────────────────── */
+    .field { margin-bottom: 16px; }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    select, input[type="password"] {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: #fff;
+      outline: none;
+      transition: border-color .18s, box-shadow .18s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    /* Custom chevron para selects */
+    .select-wrap {
+      position: relative;
+    }
+    .select-wrap::after {
+      content: "";
+      pointer-events: none;
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0; height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid var(--text-muted);
+    }
+
+    select:focus, input[type="password"]:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(255,122,47,.15);
+    }
+
+    #tab-professor select:focus,
+    #tab-professor input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(47,158,220,.15);
+    }
+
+    select:disabled {
+      background: var(--bg);
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    /* ── Linha dupla (aluno1 + aluno2) ───────────────────── */
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* ── Botão primário ──────────────────────────────────── */
+    .btn-primary {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: .2px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform .15s ease, box-shadow .15s ease, background .15s;
+      margin-top: 8px;
+    }
+
+    .btn-primary:active { transform: scale(.98); }
+
+    .btn-orange {
+      background: linear-gradient(135deg, var(--orange) 0%, #FF9448 100%);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(255,122,47,.35);
+    }
+    .btn-orange:hover { background: linear-gradient(135deg, var(--orange-dark) 0%, var(--orange) 100%); }
+
+    .btn-blue {
+      background: linear-gradient(135deg, var(--blue) 0%, #4BB5E8 100%);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(47,158,220,.35);
+    }
+    .btn-blue:hover { background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 100%); }
+
+    .btn-primary svg { width: 18px; height: 18px; fill: #fff; }
+
+    /* ── Mensagens de erro ───────────────────────────────── */
+    .alert-error {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 11px 14px;
+      background: #FEF2F2;
+      border: 1.5px solid #FECACA;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #B91C1C;
+      margin-bottom: 16px;
+    }
+    .alert-error svg { width: 16px; height: 16px; fill: #EF4444; flex-shrink: 0; }
+
+    /* ── Divider ─────────────────────────────────────────── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 20px 0 16px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    .divider::before, .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Password toggle ─────────────────────────────────── */
+    .pass-wrap { position: relative; }
+    .pass-wrap input { padding-right: 44px; }
+    .pass-toggle {
+      position: absolute;
+      right: 12px; top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+    }
+    .pass-toggle svg { width: 18px; height: 18px; }
+    .pass-toggle:hover { color: var(--blue); }
+
+    /* ── Rodapé do card ─────────────────────────────────── */
+    .card-footer {
+      border-top: 1px solid var(--border);
+      padding: 14px 32px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      background: #FAFAFA;
+    }
+    .card-footer strong { color: var(--text); }
+
+    /* ── Hint badge ──────────────────────────────────────── */
+    .badge-tip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--orange-pale);
+      color: var(--orange-dark);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      margin-bottom: 14px;
+    }
+    .badge-tip-blue {
+      background: var(--blue-pale);
+      color: var(--blue-dark);
+    }
+    .badge-tip svg { width: 12px; height: 12px; fill: currentColor; }
+
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════
+       CARD PRINCIPAL
+  ══════════════════════════════════════════ -->
+  <div class="card">
+
+    <!-- Header -->
+    <div class="card-header">
+      <div class="logo-icon">
+        <!-- Ícone de calculadora / raiz matemática -->
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19 3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0
+                   2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-3.5-7H7v-1.5h2.5l3
+                   6 2-4H17V12h-2l-3 5z"/>
+        </svg>
+      </div>
+      <h1>Sistema de Matemática</h1>
+      <p>Selecione seu perfil para continuar</p>
+    </div>
+
+    <!-- Tab bar -->
+    <div class="tab-bar">
+      <button class="tab-btn active-aluno" id="btn-tab-aluno" onclick="switchTab('aluno')">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12
+          2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+        </svg>
+        Sou Aluno
+      </button>
+      <button class="tab-btn" id="btn-tab-professor" onclick="switchTab('professor')">
+        <svg viewBox="0 0 24 24"><path d="M20 17.17V9c0-4.42-3.58-8-8-8S4 4.58 4 9v8.17l-2
+          2V21h20v-1.83l-2-2zM12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-4H6v-9c0-3.31
+          2.69-6 6-6s6 2.69 6 6v9z"/>
+        </svg>
+        Professor
+      </button>
+    </div>
+
+    <!-- Corpo -->
+    <div class="card-body">
+
+      <!-- ════════════════════════
+           PAINEL ALUNO
+      ════════════════════════ -->
+      <div class="tab-panel active" id="tab-aluno">
+
+        <span class="badge-tip">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48
+            10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+          Selecione sua turma e até dois alunos
+        </span>
+
+        {% if erro %}
+        <div class="alert-error">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10
+            10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          {{ erro }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('auth.entrar_aluno') }}">
+
+          <!-- Turma -->
+          <div class="field">
+            <label>Turma</label>
+            <div class="select-wrap">
+              <select name="turma" id="sel-turma" onchange="carregarAlunos()" required>
+                <option value="" disabled selected>Selecionar turma…</option>
+                {% for t in turmas %}
+                <option value="{{ t }}">Turma {{ t }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Aluno 1 + Aluno 2 -->
+          <div class="field-row">
+            <div class="field">
+              <label>Aluno 1</label>
+              <div class="select-wrap">
+                <select name="aluno1" id="sel-aluno1" disabled required>
+                  <option value="" disabled selected>Selecionar…</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>Aluno 2 <span style="font-weight:400;text-transform:none;font-size:10px">(opcional)</span></label>
+              <div class="select-wrap">
+                <select name="aluno2" id="sel-aluno2" disabled>
+                  <option value="Nenhum">Nenhum</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary btn-orange">
+            <svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5v10z"/></svg>
+            Entrar
+          </button>
+        </form>
+      </div>
+
+      <!-- ════════════════════════
+           PAINEL PROFESSOR
+      ════════════════════════ -->
+      <div class="tab-panel" id="tab-professor">
+
+        <span class="badge-tip badge-tip-blue">
+          <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7
+            6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6
+            9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1
+            3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+          Acesso restrito ao professor
+        </span>
+
+        {% if erro_prof %}
+        <div class="alert-error">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10
+            10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          {{ erro_prof }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('auth.entrar_professor') }}">
+
+          <div class="field">
+            <label>Senha</label>
+            <div class="pass-wrap">
+              <input type="password" name="senha" id="input-senha"
+                     placeholder="Digite a senha de acesso" autocomplete="current-password" required />
+              <button type="button" class="pass-toggle" onclick="toggleSenha()" title="Mostrar/ocultar senha">
+                <svg id="eye-icon" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11
+                    7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76
+                    0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66
+                    0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary btn-blue">
+            <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7
+              6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6
+              9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1
+              3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+            Acessar Área do Professor
+          </button>
+        </form>
+      </div>
+
+    </div><!-- /card-body -->
+
+    <!-- Rodapé -->
+    <div class="card-footer">
+      <strong>Sistema Educacional</strong> · Matemática
+    </div>
+
+  </div><!-- /card -->
+
+
+  <!-- ══════════════════════════════════════
+       DADOS DE ALUNOS (para JS)
+  ══════════════════════════════════════ -->
+  <script>
+    const ALUNOS = {{ alunos_json | safe }};
+
+    // ── Troca de tab ────────────────────────────────────────
+    function switchTab(tab) {
+      document.getElementById("tab-aluno").classList.remove("active");
+      document.getElementById("tab-professor").classList.remove("active");
+      document.getElementById("btn-tab-aluno").classList.remove("active-aluno");
+      document.getElementById("btn-tab-professor").classList.remove("active-prof");
+
+      if (tab === "aluno") {
+        document.getElementById("tab-aluno").classList.add("active");
+        document.getElementById("btn-tab-aluno").classList.add("active-aluno");
+      } else {
+        document.getElementById("tab-professor").classList.add("active");
+        document.getElementById("btn-tab-professor").classList.add("active-prof");
+      }
+    }
+
+    // ── Abre a tab correta se a URL tiver #tab-professor ────
+    if (window.location.hash === "#tab-professor") {
+      switchTab("professor");
+    }
+
+    // ── Popula dropdowns de aluno ao escolher turma ─────────
+    function carregarAlunos() {
+      const turma  = document.getElementById("sel-turma").value;
+      const alunos = ALUNOS[turma] || [];
+      const sel1   = document.getElementById("sel-aluno1");
+      const sel2   = document.getElementById("sel-aluno2");
+
+      sel1.innerHTML = '<option value="" disabled selected>Selecionar…</option>';
+      sel2.innerHTML = '<option value="Nenhum">Nenhum</option>';
+
+      alunos.forEach(nome => {
+        sel1.innerHTML += `<option value="${nome}">${nome}</option>`;
+        sel2.innerHTML += `<option value="${nome}">${nome}</option>`;
+      });
+
+      sel1.disabled = false;
+      sel2.disabled = false;
+      sel1.value = "";
+    }
+
+    // ── Mostrar/ocultar senha ───────────────────────────────
+    function toggleSenha() {
+      const input = document.getElementById("input-senha");
+      const icon  = document.getElementById("eye-icon");
+      if (input.type === "password") {
+        input.type = "text";
+        icon.innerHTML = `<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13
+          1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4
+          0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08
+          8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73
+          22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34
+          3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5
+          0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>`;
+      } else {
+        input.type = "password";
+        icon.innerHTML = `<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11
+          11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5
+          5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>`;
+      }
+    }
+  </script>
+
+</body>
+</html>

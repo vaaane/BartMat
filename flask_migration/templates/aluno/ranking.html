@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% block title %}Ranking — Aluno{% endblock %}
+{% block page_title %}Ranking{% endblock %}
+{% block page_subtitle %}Turma {{ turma }} · Sua posição no sistema{% endblock %}
+
+{% block head %}
+<style>
+  /* Tabs */
+  .tab-bar {
+    display: flex; gap: 4px; margin-bottom: 20px;
+    background: var(--bg); border-radius: 10px; padding: 4px;
+    border: 1px solid var(--border);
+  }
+  .tab-btn {
+    flex: 1; padding: 9px 16px; border-radius: 7px; border: none;
+    background: none; cursor: pointer; font-size: 13px; font-weight: 600;
+    color: var(--text-muted); text-decoration: none; text-align: center;
+    transition: background .15s, color .15s;
+  }
+  .tab-btn.active {
+    background: #fff; color: var(--blue);
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  }
+  .tab-btn:hover:not(.active) { background: #fff8; color: var(--text); }
+
+  /* Posição do aluno */
+  .my-position {
+    display: flex; align-items: center; gap: 16px;
+    padding: 18px 22px; border-radius: var(--radius);
+    background: linear-gradient(135deg, var(--orange-pale), #fff);
+    border: 1.5px solid var(--orange); margin-bottom: 20px;
+  }
+  .pos-circle {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--orange), #FF9A5C);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 800; color: #fff; flex-shrink: 0;
+  }
+  .pos-info h3 { font-size: 15px; font-weight: 700; }
+  .pos-info p  { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+  /* Tabelas de ranking */
+  .rank-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .rank-table th {
+    text-align: left; padding: 10px 14px; background: var(--bg);
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--text-muted);
+    border-bottom: 2px solid var(--border);
+  }
+  .rank-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .rank-table tr:last-child td { border-bottom: none; }
+  .rank-table tr:hover td { background: #FAFAFA; }
+
+  .rank-table tr.destaque td {
+    background: linear-gradient(90deg, var(--orange-pale) 0%, #fff 100%);
+    font-weight: 600;
+  }
+  .rank-table tr.destaque:hover td { background: #FFE8D6; }
+
+  .pos-badge { font-size: 16px; width: 36px; text-align: center; display: inline-block; }
+  .pts-col   { font-weight: 800; font-size: 15px; color: var(--gold); }
+  .eu-badge  { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+               background: var(--orange-pale); color: var(--orange-dark); }
+
+  .top1 td { background: linear-gradient(90deg,#FFFBEB,#fff) !important; }
+  .top2 td { background: linear-gradient(90deg,#F9FAFB,#fff) !important; }
+  .top3 td { background: linear-gradient(90deg,#FFF7ED,#fff) !important; }
+
+  /* Ranking de turmas */
+  .turma-destaque td {
+    background: linear-gradient(90deg, var(--blue-pale) 0%, #fff 100%) !important;
+    font-weight: 600;
+  }
+  .turma-destaque:hover td { background: #DBEAFE !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Tabs -->
+<div class="tab-bar">
+  <a href="?tab=geral"   class="tab-btn {% if tab == 'geral' %}active{% endif %}">Geral</a>
+  <a href="?tab=turma"   class="tab-btn {% if tab == 'turma' %}active{% endif %}">Minha Turma</a>
+  <a href="?tab=turmas"  class="tab-btn {% if tab == 'turmas' %}active{% endif %}">Turmas</a>
+</div>
+
+{# ── ABA GERAL ── #}
+{% if tab == 'geral' %}
+
+{% for aluno in alunos %}
+{% if posicoes[aluno] is defined %}
+<div class="my-position">
+  <div class="pos-circle">{{ posicoes[aluno] }}º</div>
+  <div class="pos-info">
+    <h3>{{ aluno }}</h3>
+    <p>{{ posicoes[aluno] }}º lugar de {{ total }} · Turma {{ turma }}</p>
+  </div>
+  {% set rank_item = rank_list | selectattr('aluno', 'equalto', aluno) | first %}
+  {% if rank_item %}
+  <div style="margin-left:auto;text-align:right">
+    <div style="font-size:22px;font-weight:800;color:var(--gold)">{{ rank_item.pts }}</div>
+    <div style="font-size:11px;color:var(--text-muted)">pontos</div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+{% endfor %}
+
+<div class="card" style="padding:0;overflow:hidden">
+  {% if rank_list %}
+  <table class="rank-table">
+    <thead>
+      <tr>
+        <th style="width:50px">#</th>
+        <th>Aluno</th>
+        <th>Turma</th>
+        <th style="text-align:right">Pontos</th>
+        <th style="text-align:right">Atividades</th>
+        <th style="text-align:right">Acertos</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set medals = {1:'🥇', 2:'🥈', 3:'🥉'} %}
+      {% for r in rank_list %}
+      <tr class="{% if r.destaque %}destaque{% elif r.pos == 1 %}top1{% elif r.pos == 2 %}top2{% elif r.pos == 3 %}top3{% endif %}">
+        <td>
+          {% if r.pos in medals and not r.destaque %}
+            <span class="pos-badge">{{ medals[r.pos] }}</span>
+          {% else %}
+            <span style="font-weight:700;color:var(--text-muted)">{{ r.pos }}º</span>
+          {% endif %}
+        </td>
+        <td>
+          <span style="font-weight:{% if r.destaque %}700{% else %}400{% endif %}">{{ r.aluno }}</span>
+          {% if r.destaque %}<span class="eu-badge">Você</span>{% endif %}
+        </td>
+        <td><span class="badge badge-blue">{{ r.turma }}</span></td>
+        <td style="text-align:right" class="pts-col">{{ r.pts }}</td>
+        <td style="text-align:right;color:var(--text-muted)">{{ r.ativs }}</td>
+        <td style="text-align:right;color:var(--green);font-weight:600">{{ r.acertos }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="empty-state" style="padding:48px">
+      <svg viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg>
+      <p>Nenhum resultado ainda.</p>
+    </div>
+  {% endif %}
+</div>
+
+{# ── ABA MINHA TURMA ── #}
+{% elif tab == 'turma' %}
+
+{% for aluno in alunos %}
+{% set r_turma = rank_turma | selectattr('aluno', 'equalto', aluno) | first %}
+{% if r_turma %}
+<div class="my-position">
+  <div class="pos-circle">{{ r_turma.pos }}º</div>
+  <div class="pos-info">
+    <h3>{{ aluno }}</h3>
+    <p>{{ r_turma.pos }}º lugar na Turma {{ turma }} · {{ rank_turma|length }} alunos</p>
+  </div>
+  <div style="margin-left:auto;text-align:right">
+    <div style="font-size:22px;font-weight:800;color:var(--gold)">{{ r_turma.pts }}</div>
+    <div style="font-size:11px;color:var(--text-muted)">pontos</div>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+
+<div class="card" style="padding:0;overflow:hidden">
+  {% if rank_turma %}
+  <table class="rank-table">
+    <thead>
+      <tr>
+        <th style="width:50px">#</th>
+        <th>Aluno</th>
+        <th style="text-align:right">Pontos</th>
+        <th style="text-align:right">Atividades</th>
+        <th style="text-align:right">Acertos</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set medals = {1:'🥇', 2:'🥈', 3:'🥉'} %}
+      {% for r in rank_turma %}
+      <tr class="{% if r.destaque %}destaque{% elif r.pos == 1 %}top1{% elif r.pos == 2 %}top2{% elif r.pos == 3 %}top3{% endif %}">
+        <td>
+          {% if r.pos in medals and not r.destaque %}
+            <span class="pos-badge">{{ medals[r.pos] }}</span>
+          {% else %}
+            <span style="font-weight:700;color:var(--text-muted)">{{ r.pos }}º</span>
+          {% endif %}
+        </td>
+        <td>
+          <span style="font-weight:{% if r.destaque %}700{% else %}400{% endif %}">{{ r.aluno }}</span>
+          {% if r.destaque %}<span class="eu-badge">Você</span>{% endif %}
+        </td>
+        <td style="text-align:right" class="pts-col">{{ r.pts }}</td>
+        <td style="text-align:right;color:var(--text-muted)">{{ r.ativs }}</td>
+        <td style="text-align:right;color:var(--green);font-weight:600">{{ r.acertos }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="empty-state" style="padding:48px">
+      <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      <p>Nenhum resultado na turma ainda.</p>
+    </div>
+  {% endif %}
+</div>
+
+{# ── ABA RANKING DE TURMAS ── #}
+{% elif tab == 'turmas' %}
+
+{% set minha_turma_rank = rank_turmas | selectattr('turma', 'equalto', turma) | first %}
+{% if minha_turma_rank %}
+<div class="my-position">
+  <div class="pos-circle">{{ minha_turma_rank.pos }}º</div>
+  <div class="pos-info">
+    <h3>Turma {{ turma }}</h3>
+    <p>{{ minha_turma_rank.pos }}º lugar de {{ total_turmas }} turmas · {{ minha_turma_rank.alunos }} alunos</p>
+  </div>
+  <div style="margin-left:auto;text-align:right">
+    <div style="font-size:22px;font-weight:800;color:var(--gold)">{{ minha_turma_rank.pts }}</div>
+    <div style="font-size:11px;color:var(--text-muted)">pontos totais</div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card" style="padding:0;overflow:hidden">
+  {% if rank_turmas %}
+  <table class="rank-table">
+    <thead>
+      <tr>
+        <th style="width:50px">#</th>
+        <th>Turma</th>
+        <th style="text-align:right">Pontos totais</th>
+        <th style="text-align:right">Alunos</th>
+        <th style="text-align:right">Média/aluno</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set medals = {1:'🥇', 2:'🥈', 3:'🥉'} %}
+      {% for r in rank_turmas %}
+      <tr class="{% if r.destaque %}turma-destaque{% elif r.pos == 1 %}top1{% elif r.pos == 2 %}top2{% elif r.pos == 3 %}top3{% endif %}">
+        <td>
+          {% if r.pos in medals and not r.destaque %}
+            <span class="pos-badge">{{ medals[r.pos] }}</span>
+          {% else %}
+            <span style="font-weight:700;color:var(--text-muted)">{{ r.pos }}º</span>
+          {% endif %}
+        </td>
+        <td>
+          <span class="badge badge-blue">Turma {{ r.turma }}</span>
+          {% if r.destaque %}<span class="eu-badge" style="margin-left:6px">Minha turma</span>{% endif %}
+        </td>
+        <td style="text-align:right" class="pts-col">{{ r.pts }}</td>
+        <td style="text-align:right;color:var(--text-muted)">{{ r.alunos }}</td>
+        <td style="text-align:right;color:var(--green);font-weight:600">{{ r.media }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="empty-state" style="padding:48px">
+      <svg viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg>
+      <p>Nenhum resultado ainda.</p>
+    </div>
+  {% endif %}
+</div>
+
+{% endif %}
+
+{% endblock %}

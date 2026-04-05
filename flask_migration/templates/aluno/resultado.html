@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Resultado — {{ jogo.nome }}{% endblock %}
+{% block page_title %}Resultado Final{% endblock %}
+{% block page_subtitle %}{{ jogo.nome }} · Turma {{ jogo.turma }}{% endblock %}
+
+{% block head %}
+<style>
+  /* Conquistas banner */
+  .banner-conquistas {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 16px 20px; border-radius: var(--radius);
+    background: linear-gradient(135deg, #FFFBEB, #fff);
+    border: 1.5px solid var(--gold); margin-bottom: 20px;
+    animation: fadeInDown .5s ease;
+  }
+  .banner-titulo { font-size: 15px; font-weight: 800; color: var(--gold); flex-shrink: 0; }
+  .conquista-chip {
+    padding: 4px 12px; border-radius: 20px;
+    background: #FEF9C3; color: #854D0E;
+    font-size: 12px; font-weight: 700;
+  }
+  @keyframes fadeInDown { from { opacity:0; transform:translateY(-12px) } to { opacity:1; transform:none } }
+
+  /* Stats */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow-sm);
+    padding: 16px 12px; text-align: center;
+  }
+  .stat-val { font-size: 26px; font-weight: 800; line-height: 1; }
+  .stat-lbl { font-size: 10px; color: var(--text-muted); margin-top: 5px;
+              text-transform: uppercase; letter-spacing: .4px; }
+
+  /* Fator atraso banner */
+  .atraso-banner {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; border-radius: 10px;
+    background: #FFF7ED; border: 1px solid #FED7AA;
+    font-size: 13px; color: var(--orange-dark); font-weight: 600;
+    margin-bottom: 20px;
+  }
+
+  /* Revisão questões */
+  .q-rev {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; border-radius: 8px; border: 1px solid var(--border);
+    margin-bottom: 8px; font-size: 13px;
+  }
+  .q-rev:last-child { margin-bottom: 0; }
+  .q-rev.ok  { background: #F0FDF4; border-color: #BBF7D0; }
+  .q-rev.err { background: #FEF2F2; border-color: #FECACA; }
+  .q-rev.skip { background: var(--bg); }
+  .q-num  { font-size: 11px; font-weight: 700; color: var(--text-muted); width: 28px; flex-shrink: 0; }
+  .q-perg { flex: 1; font-weight: 500; }
+  .q-resp-ok  { color: var(--green); font-weight: 700; font-size: 12px; }
+  .q-resp-err { color: var(--red);   font-weight: 700; font-size: 12px; }
+  .q-correta  { font-size: 11px; color: var(--text-muted); }
+  .q-tent     { font-size: 11px; color: var(--text-muted); width: 26px; text-align: right; flex-shrink: 0; }
+
+  /* Botões de ação */
+  .resultado-actions {
+    display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% set pf = jogo.pontuacao_final %}
+{% set pb = jogo.pontuacao_bruta %}
+{% set tt = jogo.tempo_segundos %}
+{% set m  = tt // 60 %}
+{% set s  = tt % 60 %}
+{% set tempo_fmt = "%02d:%02d"|format(m, s) %}
+
+<!-- Banner de conquistas -->
+{% if jogo.novas_conquistas %}
+<div class="banner-conquistas">
+  <span class="banner-titulo">🏆 Conquistas desbloqueadas!</span>
+  {% for c in jogo.novas_conquistas %}
+  <span class="conquista-chip">{{ c }}</span>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-val" style="color:var(--gold)">{{ pf }}</div>
+    <div class="stat-lbl">Pontuação</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val" style="color:var(--green)">{{ jogo.acertos }}</div>
+    <div class="stat-lbl">Acertos</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val" style="color:var(--red)">{{ jogo.erros }}</div>
+    <div class="stat-lbl">Erros</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val" style="color:var(--blue);font-size:20px">{{ tempo_fmt }}</div>
+    <div class="stat-lbl">Tempo</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val" style="color:var(--text)">{{ jogo.respondidas }}</div>
+    <div class="stat-lbl">Respondidas</div>
+  </div>
+</div>
+
+<!-- Fator de atraso -->
+{% if jogo.fator_atraso < 1 %}
+<div class="atraso-banner">
+  <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor;flex-shrink:0">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1
+      15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+  </svg>
+  Atividade {{ LABEL_TIPO.get(jogo.tipo, jogo.tipo) }} —
+  fator {{ (jogo.fator_atraso * 100)|round|int }}% &nbsp;·&nbsp;
+  Pontuação bruta: {{ pb }} → Final: {{ pf }} pts
+</div>
+{% endif %}
+
+<!-- Revisão das questões -->
+<div class="card">
+  <div class="card-title" style="margin-bottom:16px">
+    <svg viewBox="0 0 24 24"><path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11
+      0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0
+      16H5V9h14v11z"/></svg>
+    Revisão das questões
+  </div>
+
+  {% for h in jogo.historico %}
+  <div class="q-rev {% if h.acertou %}ok{% else %}err{% endif %}">
+    <div class="q-num">Q{{ loop.index }}</div>
+    <div class="q-perg">{{ h.pergunta }}</div>
+    <div class="{% if h.acertou %}q-resp-ok{% else %}q-resp-err{% endif %}">
+      {{ h.resposta_aluno }}
+    </div>
+    {% if not h.acertou %}
+    <div class="q-correta">✓ {{ h.resposta_correta }}</div>
+    {% endif %}
+    <div class="q-tent">{{ h.tentativas }}×</div>
+    <div>{% if h.acertou %}✅{% else %}❌{% endif %}</div>
+  </div>
+  {% endfor %}
+
+</div>
+
+<!-- Ações -->
+<div class="resultado-actions">
+  <a href="{{ url_for('aluno.menu') }}" class="btn btn-blue">
+    <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    Voltar ao menu
+  </a>
+  <a href="{{ url_for('aluno.historico') }}" class="btn btn-ghost">
+    <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9
+      12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42
+      1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28
+      2.54.72-1.21L13 13.04V8h-1z"/></svg>
+    Ver histórico
+  </a>
+  <a href="{{ url_for('aluno.ranking') }}" class="btn btn-ghost">
+    <svg viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg>
+    Ver ranking
+  </a>
+</div>
+
+{% endblock %}

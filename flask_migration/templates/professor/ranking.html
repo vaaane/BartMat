@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Ranking — Professor{% endblock %}
+{% block page_title %}Ranking{% endblock %}
+{% block page_subtitle %}Classificação geral dos alunos{% endblock %}
+
+{% block head %}
+<style>
+  .turma-filter { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
+  .turma-filter label { font-size:13px; font-weight:600; color:var(--text-muted); }
+
+  .rank-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .rank-table th {
+    text-align:left; padding:10px 14px; background:var(--bg);
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
+    color:var(--text-muted); border-bottom:2px solid var(--border);
+  }
+  .rank-table td { padding:11px 14px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .rank-table tr:last-child td { border-bottom:none; }
+  .rank-table tr:hover td { background:#FAFAFA; }
+
+  .pos-medal { font-size:18px; width:36px; text-align:center; display:inline-block; }
+  .pos-num   { font-size:13px; font-weight:700; color:var(--text-muted); }
+
+  .aluno-cell { font-weight:700; }
+  .pts-cell   { font-weight:800; font-size:15px; color:var(--gold); }
+
+  .bar-wrap { width:80px; height:6px; background:var(--border); border-radius:3px; display:inline-block; }
+  .bar-fill { height:100%; border-radius:3px; background:var(--green); }
+
+  .top1 td { background:linear-gradient(90deg,#FFFBEB 0%,#fff 100%); }
+  .top2 td { background:linear-gradient(90deg,#F9FAFB 0%,#fff 100%); }
+  .top3 td { background:linear-gradient(90deg,#FFF7ED 0%,#fff 100%); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Filtro de turma -->
+<form method="GET" action="{{ url_for('professor.ranking') }}">
+  <div class="turma-filter">
+    <label>Filtrar por turma:</label>
+    {% for t in turmas %}
+    <a href="{{ url_for('professor.ranking', turma=t) }}"
+       class="btn btn-sm {% if turma_sel == t %}btn-blue{% else %}btn-ghost{% endif %}">
+      {{ t }}
+    </a>
+    {% endfor %}
+  </div>
+</form>
+
+<div class="card" style="padding:0;overflow:hidden">
+  {% if ranking_list %}
+  <table class="rank-table">
+    <thead>
+      <tr>
+        <th style="width:50px">#</th>
+        <th>Aluno</th>
+        <th>Turma</th>
+        <th>Pontos</th>
+        <th>Atividades</th>
+        <th>Acertos</th>
+        <th>Erros</th>
+        <th>Aproveit.</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set medals = {1:'🥇', 2:'🥈', 3:'🥉'} %}
+      {% for r in ranking_list %}
+      <tr class="{% if r.pos == 1 %}top1{% elif r.pos == 2 %}top2{% elif r.pos == 3 %}top3{% endif %}">
+        <td>
+          {% if r.pos in medals %}
+            <span class="pos-medal">{{ medals[r.pos] }}</span>
+          {% else %}
+            <span class="pos-num">{{ r.pos }}º</span>
+          {% endif %}
+        </td>
+        <td class="aluno-cell">{{ r.aluno }}</td>
+        <td><span class="badge badge-blue">Turma {{ r.turma }}</span></td>
+        <td class="pts-cell">{{ r.pts }}</td>
+        <td>{{ r.ativs }}</td>
+        <td style="color:var(--green);font-weight:600">{{ r.acertos }}</td>
+        <td style="color:var(--red);font-weight:600">{{ r.erros }}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span>{{ r.aproveit }}%</span>
+            <span class="bar-wrap">
+              <span class="bar-fill" style="width:{{ r.aproveit }}%"></span>
+            </span>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="empty-state" style="padding:48px">
+      <svg viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg>
+      <p>Nenhum resultado para exibir.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

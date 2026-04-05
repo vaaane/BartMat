@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}Relatório — Professor{% endblock %}
+{% block page_title %}Relatório por Turma{% endblock %}
+{% block page_subtitle %}Desempenho consolidado — Turma {{ turma_sel }}{% endblock %}
+
+{% block head %}
+<style>
+  .turma-tabs { display:flex; gap:8px; margin-bottom:22px; }
+
+  .rel-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .rel-table th {
+    text-align:left; padding:10px 14px; background:var(--bg);
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
+    color:var(--text-muted); border-bottom:2px solid var(--border);
+  }
+  .rel-table th.right { text-align:right; }
+  .rel-table td { padding:11px 14px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .rel-table td.right { text-align:right; }
+  .rel-table tr:last-child td { border-bottom:none; }
+  .rel-table tr:hover td { background:#FAFAFA; }
+  .rel-table tr.sem-ativ td { color:var(--text-muted); font-style:italic; }
+
+  .aluno-col { font-weight:700; }
+  .pts-col   { font-weight:800; font-size:15px; color:var(--gold); }
+  .verde     { color:var(--green); font-weight:600; }
+  .vermelho  { color:var(--red);   font-weight:600; }
+
+  .bar-wrap  { width:60px; height:5px; background:var(--border); border-radius:3px; display:inline-block; vertical-align:middle; }
+  .bar-fill  { height:100%; border-radius:3px; }
+  .bar-green { background:var(--green); }
+  .bar-red   { background:var(--red); }
+
+  /* Sumário */
+  .summary-row {
+    display:flex; gap:16px; margin-bottom:22px; flex-wrap:wrap;
+  }
+  .summary-item {
+    flex:1; min-width:130px;
+    background:var(--card); border-radius:var(--radius);
+    border:1px solid var(--border); padding:16px 18px;
+    box-shadow:var(--shadow-sm);
+  }
+  .summary-value { font-size:26px; font-weight:800; line-height:1; }
+  .summary-label { font-size:12px; color:var(--text-muted); margin-top:4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Filtro de turma -->
+<div class="turma-tabs">
+  {% for t in turmas %}
+  <a href="{{ url_for('professor.relatorio', turma=t) }}"
+     class="btn btn-sm {% if t == turma_sel %}btn-blue{% else %}btn-ghost{% endif %}">
+    Turma {{ t }}
+  </a>
+  {% endfor %}
+</div>
+
+<!-- Sumário rápido -->
+{% set ativos = tabela | selectattr('ativs', 'gt', 0) | list %}
+{% set inativos = tabela | selectattr('ativs', 'eq', 0) | list %}
+{% set total_pts_turma = tabela | sum(attribute='pts') %}
+{% set media_turma = (total_pts_turma / ativos|length)|round|int if ativos else 0 %}
+
+<div class="summary-row">
+  <div class="summary-item">
+    <div class="summary-value" style="color:var(--blue)">{{ tabela|length }}</div>
+    <div class="summary-label">Total de alunos</div>
+  </div>
+  <div class="summary-item">
+    <div class="summary-value" style="color:var(--green)">{{ ativos|length }}</div>
+    <div class="summary-label">Participaram</div>
+  </div>
+  <div class="summary-item">
+    <div class="summary-value" style="color:var(--red)">{{ inativos|length }}</div>
+    <div class="summary-label">Sem atividade</div>
+  </div>
+  <div class="summary-item">
+    <div class="summary-value" style="color:var(--gold)">{{ media_turma }}</div>
+    <div class="summary-label">Média de pontos</div>
+  </div>
+  <div class="summary-item" style="display:flex;align-items:center;justify-content:center">
+    <a href="{{ url_for('professor.relatorio_csv', turma=turma_sel) }}"
+       class="btn btn-blue">
+      <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+      Exportar CSV
+    </a>
+  </div>
+</div>
+
+<!-- Tabela principal -->
+<div class="card" style="padding:0;overflow:hidden">
+  <table class="rel-table">
+    <thead>
+      <tr>
+        <th style="width:30px">#</th>
+        <th>Aluno</th>
+        <th class="right">Pontos</th>
+        <th class="right">Atividades</th>
+        <th class="right">Média</th>
+        <th class="right">Acertos</th>
+        <th class="right">Erros</th>
+        <th>Aproveit.</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in tabela %}
+      <tr {% if r.ativs == 0 %}class="sem-ativ"{% endif %}>
+        <td style="color:var(--text-muted);font-size:12px">{{ loop.index }}</td>
+        <td class="aluno-col">{{ r.aluno }}</td>
+        <td class="right pts-col">{% if r.pts > 0 %}{{ r.pts }}{% else %}—{% endif %}</td>
+        <td class="right">{% if r.ativs > 0 %}{{ r.ativs }}{% else %}—{% endif %}</td>
+        <td class="right">{% if r.media > 0 %}{{ r.media }}{% else %}—{% endif %}</td>
+        <td class="right verde">{% if r.acertos > 0 %}{{ r.acertos }}{% else %}—{% endif %}</td>
+        <td class="right vermelho">{% if r.erros > 0 %}{{ r.erros }}{% else %}—{% endif %}</td>
+        <td>
+          {% if r.ativs > 0 %}
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:12px;font-weight:600;width:34px">{{ r.aproveit }}%</span>
+            <span class="bar-wrap">
+              <span class="bar-fill {% if r.aproveit >= 70 %}bar-green{% else %}bar-red{% endif %}"
+                    style="width:{{ r.aproveit }}%"></span>
+            </span>
+          </div>
+          {% else %}
+            <span style="color:var(--text-muted)">—</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Jinja2 não tem enumerate nativo — polyfill via filtro ou usando loop.index
+// O template usa "enumerate" como macro; definimos aqui para Jinja2 puro:
+</script>
+{% endblock %}

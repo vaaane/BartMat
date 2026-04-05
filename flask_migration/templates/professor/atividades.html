@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Atividades — Professor{% endblock %}
+{% block page_title %}Atividades{% endblock %}
+{% block page_subtitle %}Liberar e gerenciar atividades por turma{% endblock %}
+
+{% block head %}
+<style>
+  .lib-form { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
+  .lib-active-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 13px 16px; border-radius: 10px;
+    background: var(--blue-pale); border: 1.5px solid #BAE6FD;
+    margin-bottom: 10px;
+  }
+  .lib-active-row:last-child { margin-bottom: 0; }
+  .lib-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+             flex-shrink:0; box-shadow: 0 0 0 3px rgba(34,197,94,.2); }
+  .lib-nome { font-size: 14px; font-weight: 700; }
+  .lib-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .lib-spacer { flex: 1; }
+
+  .hist-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; border-bottom: 1px solid var(--border);
+  }
+  .hist-item:last-child { border-bottom: none; }
+  .hist-item:hover { background: #FAFAFA; }
+  .hist-ativ { font-size: 13px; font-weight: 600; }
+  .hist-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .hist-status { margin-left: auto; flex-shrink: 0; }
+
+  .status-ativa     { color: var(--green); font-weight: 600; font-size: 12px; }
+  .status-cancelada { color: var(--red);   font-weight: 600; font-size: 12px; }
+  .status-expirada  { color: var(--text-muted); font-size: 12px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Flash messages -->
+{% with msgs = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in msgs %}
+  <div class="alert alert-{{ 'success' if cat=='success' else 'info' if cat=='info' else 'error' }}"
+       style="margin-bottom:16px">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10
+      10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+    {{ msg }}
+  </div>
+  {% endfor %}
+{% endwith %}
+
+<div class="grid-2">
+  <div>
+
+    <!-- Formulário liberar -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:18px;color:var(--blue)">
+        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        Liberar Atividade
+      </div>
+      <form method="POST" action="{{ url_for('professor.liberar') }}">
+        <div class="lib-form">
+          <div class="field" style="margin:0">
+            <label class="field-label">Atividade</label>
+            <div class="select-wrap">
+              <select name="atividade" class="input" required>
+                <option value="" disabled selected>Selecionar…</option>
+                {% for a in atividades %}
+                <option value="{{ a.nome }}">{{ a.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="field" style="margin:0">
+            <label class="field-label">Turma</label>
+            <div class="select-wrap">
+              <select name="turma" class="input" required>
+                <option value="" disabled selected>—</option>
+                {% for t in turmas %}
+                <option value="{{ t }}">Turma {{ t }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="field" style="margin:0">
+            <label class="field-label">Tipo</label>
+            <div class="select-wrap">
+              <select name="tipo" class="input">
+                {% for key, lbl in label_tipo.items() %}
+                <option value="{{ key }}">{{ lbl }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="field" style="margin:0">
+            <label class="field-label">Tempo (min)</label>
+            <input type="number" name="tempo_maximo" class="input" value="10" min="1" max="120" required />
+          </div>
+          <div style="padding-bottom:0">
+            <button type="submit" class="btn btn-blue">
+              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              Liberar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Ativas agora -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:16px;color:var(--green)">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10
+          10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        Ativas Agora
+        <span class="badge badge-green" style="margin-left:6px">{{ liberadas|length }}</span>
+      </div>
+
+      {% if liberadas %}
+        {% for lib in liberadas %}
+        <div class="lib-active-row">
+          <div class="lib-dot"></div>
+          <div>
+            <div class="lib-nome">{{ lib.atividade }}</div>
+            <div class="lib-meta">
+              Turma {{ lib.turma }} · {{ label_tipo.get(lib.tipo, lib.tipo) }}
+              · {{ lib.tempo_maximo // 60 }} min
+              {% if lib.expira_em %} · Expira {{ lib.expira_em[:16].replace("T"," ") }}{% endif %}
+            </div>
+          </div>
+          <div class="lib-spacer"></div>
+          {% if lib._lib_id %}
+          <form method="POST" action="{{ url_for('professor.cancelar', lib_id=lib._lib_id) }}"
+                onsubmit="return confirm('Cancelar esta liberação?')">
+            <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--red);border-color:#FECACA">
+              <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41
+                10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              Cancelar
+            </button>
+          </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6
+            c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6
+            9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1
+            3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+          <p>Nenhuma atividade liberada no momento.</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Coluna direita: histórico -->
+  <div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:16px;color:var(--text-muted)">
+        <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9
+          12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42
+          1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28
+          2.54.72-1.21L13 13.04V8h-1z"/></svg>
+        Histórico de Liberações
+      </div>
+      {% if historico %}
+        {% for h in historico %}
+        <div class="hist-item">
+          <div>
+            <div class="hist-ativ">{{ h.atividade }}</div>
+            <div class="hist-meta">
+              Turma {{ h.turma }}
+              &nbsp;·&nbsp;{{ label_tipo.get(h.tipo, h.tipo) }}
+              &nbsp;·&nbsp;{{ h.liberado_em[:16].replace("T"," ") if h.liberado_em else "—" }}
+            </div>
+          </div>
+          <div class="hist-status">
+            {% if h.cancelado_em %}
+              <span class="status-cancelada">✕ Cancelada</span>
+            {% elif h.expira_em and h.expira_em < now_iso %}
+              <span class="status-expirada">Expirada</span>
+            {% else %}
+              <span class="status-ativa">● Ativa</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state"><p>Nenhuma liberação registrada.</p></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Injeta "now" para comparar no template (server-side seria melhor, mas funciona)
+</script>
+{% endblock %}

@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+{% block title %}Acompanhamento — Professor{% endblock %}
+{% block page_title %}Acompanhamento{% endblock %}
+{% block page_subtitle %}Histórico individual por aluno{% endblock %}
+
+{% block head %}
+<style>
+  .selector-bar {
+    display: flex; align-items: flex-end; gap: 14px;
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 18px 20px;
+    margin-bottom: 22px;
+  }
+  .selector-bar .field { margin: 0; flex: 1; }
+  .selector-bar .btn   { margin-bottom: 0; flex-shrink: 0; }
+
+  /* Resultado card */
+  .result-card {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; margin-bottom: 14px;
+  }
+  .result-card:last-child { margin-bottom: 0; }
+
+  .result-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg);
+    cursor: pointer;
+  }
+  .result-header:hover { background: #EEF2F7; }
+
+  .result-ativ  { font-size: 14px; font-weight: 700; flex: 1; }
+  .result-meta  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .result-pts   { font-size: 16px; font-weight: 800; color: var(--gold); }
+  .toggle-icon  { width: 18px; height: 18px; fill: var(--text-muted); transition: transform .2s; }
+
+  details[open] .toggle-icon { transform: rotate(180deg); }
+
+  /* Questões detail */
+  .questoes-body { padding: 14px 16px; }
+  .q-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 12px; border-radius: 8px;
+    border: 1px solid var(--border); margin-bottom: 7px;
+    font-size: 13px;
+  }
+  .q-row:last-child { margin-bottom: 0; }
+  .q-row.acertou { background: #F0FDF4; border-color: #BBF7D0; }
+  .q-row.errou   { background: #FEF2F2; border-color: #FECACA; }
+
+  .q-num    { font-size:11px; font-weight:700; color:var(--text-muted); width:24px; }
+  .q-pergunta { flex:1; font-weight:500; }
+  .q-resp   { font-size:12px; }
+  .q-resp.ok  { color:var(--green); font-weight:600; }
+  .q-resp.err { color:var(--red);   font-weight:600; }
+  .q-correta{ font-size:11px; color:var(--text-muted); }
+  .q-tent   { font-size:11px; color:var(--text-muted); width:28px; text-align:right; }
+
+  /* Atividades não feitas */
+  .nao-feita-chip {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border-radius: 8px;
+    background: #FEF2F2; border: 1px solid #FECACA;
+    font-size: 12px; font-weight: 600; color: #B91C1C;
+    margin-bottom: 6px;
+  }
+  .nao-feita-chip:last-child { margin-bottom: 0; }
+
+  /* Pendentes por atividade */
+  .pend-block { margin-bottom: 14px; }
+  .pend-block:last-child { margin-bottom: 0; }
+  .pend-ativ-title {
+    font-size: 12px; font-weight: 700; color: var(--text);
+    margin-bottom: 6px; display: flex; align-items: center; gap: 8px;
+  }
+  .pend-alunos { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pend-chip {
+    padding: 3px 10px; border-radius: 20px;
+    background: #FEF2F2; border: 1px solid #FECACA;
+    font-size: 11px; font-weight: 600; color: #B91C1C;
+  }
+  .pend-ok {
+    font-size: 11px; color: var(--green); font-weight: 600;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Seletor turma / aluno -->
+<form method="GET" action="{{ url_for('professor.acompanhamento') }}">
+  <div class="selector-bar">
+    <div class="field">
+      <label class="field-label">Turma</label>
+      <div class="select-wrap">
+        <select name="turma" class="input" onchange="this.form.submit()">
+          <option value="" {% if not turma_sel %}selected{% endif %} disabled>Selecionar…</option>
+          {% for t in turmas %}
+          <option value="{{ t }}" {% if t == turma_sel %}selected{% endif %}>Turma {{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    {% if turma_sel %}
+    <div class="field">
+      <label class="field-label">Aluno</label>
+      <div class="select-wrap">
+        <select name="aluno" class="input">
+          <option value="" {% if not aluno_sel %}selected{% endif %}>Selecionar…</option>
+          {% for a in alunos_turma %}
+          <option value="{{ a }}" {% if a == aluno_sel %}selected{% endif %}>{{ a }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-blue">Ver</button>
+    {% endif %}
+  </div>
+</form>
+
+{% if turma_sel %}
+<div class="grid-2">
+  <div>
+
+    <!-- Resultados do aluno -->
+    {% if aluno_sel %}
+      <div class="card-title" style="margin-bottom:14px">
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:var(--blue)"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4
+          12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4
+          c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+        {{ aluno_sel }} — Atividades realizadas
+      </div>
+
+      {% if resultados_aluno %}
+        {% for r in resultados_aluno %}
+        <div class="result-card">
+          <details>
+            <summary class="result-header" style="list-style:none">
+              <div style="flex:1">
+                <div class="result-ativ">{{ r.atividade }}</div>
+                <div class="result-meta">
+                  {{ r.data }} · {{ r.acertos }} acertos · {{ r.erros }} erros · {{ r.tempo }}
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div class="result-pts">{{ r.pontuacao }} pts</div>
+                {% if r.atraso %}
+                  <span class="badge badge-orange">Atraso</span>
+                {% endif %}
+                <svg class="toggle-icon" viewBox="0 0 24 24">
+                  <path d="M7 10l5 5 5-5z"/>
+                </svg>
+              </div>
+            </summary>
+
+            <div class="questoes-body">
+              {% if r.detalhes %}
+                {% for q in r.detalhes %}
+                <div class="q-row {% if q.acertou %}acertou{% else %}errou{% endif %}">
+                  <div class="q-num">Q{{ q.numero }}</div>
+                  <div class="q-pergunta">{{ q.pergunta }}</div>
+                  <div class="q-resp {% if q.acertou %}ok{% else %}err{% endif %}">
+                    {{ q.resposta_aluno }}
+                  </div>
+                  {% if not q.acertou %}
+                  <div class="q-correta">✓ {{ q.resposta_correta }}</div>
+                  {% endif %}
+                  <div class="q-tent">{{ q.tentativas }}x</div>
+                  <div>{% if q.acertou %}✅{% else %}❌{% endif %}</div>
+                </div>
+                {% endfor %}
+              {% else %}
+                <p style="font-size:13px;color:var(--text-muted)">
+                  Sem detalhes de questões para este resultado.
+                </p>
+              {% endif %}
+            </div>
+          </details>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="card">
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1
+              0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2
+              v-4H9V9h4V5h2v4h4v2z"/></svg>
+            <p>{{ aluno_sel }} ainda não realizou nenhuma atividade.</p>
+          </div>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="card">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12
+            2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2
+            v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+          <p>Selecione um aluno para ver o histórico.</p>
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Coluna direita: dados do aluno selecionado -->
+  <div>
+    {% if aluno_sel %}
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px;color:var(--orange)">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12
+          2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2
+          v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+        {{ aluno_sel }} — Pendências
+        {% if atividades_nao_feitas %}
+        <span class="badge badge-orange" style="margin-left:6px">{{ atividades_nao_feitas|length }}</span>
+        {% endif %}
+      </div>
+      {% if atividades_nao_feitas %}
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">
+          Atividades ainda não realizadas:
+        </p>
+        {% for nome in atividades_nao_feitas %}
+        <div class="nao-feita-chip">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;flex-shrink:0">
+            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10
+              c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2
+              s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1
+              1.71 0 3.1 1.39 3.1 3.1v2z"/>
+          </svg>
+          {{ nome }}
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--green);font-weight:600">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2
+              15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+          Completou todas as atividades!
+        </div>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="card">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12
+          2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2
+          v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+        <p>Selecione um aluno para ver as pendências.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ── Pendentes por atividade — Turma (seção full-width) ── -->
+<div class="card" style="margin-top:20px">
+  <div class="card-title" style="margin-bottom:18px;color:var(--blue)">
+    <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66
+      0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5
+      8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0
+      c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+    Pendentes por atividade
+    <span style="font-size:12px;font-weight:400;color:var(--text-muted);margin-left:6px">
+      Turma {{ turma_sel }}
+    </span>
+  </div>
+
+  {% if pendentes_por_atividade %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+    {% for ativ_nome, faltam in pendentes_por_atividade.items() %}
+    <div style="border:1px solid var(--border);border-radius:10px;padding:14px">
+      <div class="pend-ativ-title">
+        {{ ativ_nome }}
+        {% if faltam %}
+        <span class="badge badge-red">{{ faltam|length }} pendente{{ 's' if faltam|length != 1 }}</span>
+        {% else %}
+        <span class="badge badge-green">Todos fizeram</span>
+        {% endif %}
+      </div>
+      {% if faltam %}
+      <div class="pend-alunos" style="margin-top:8px">
+        {% for a in faltam %}
+        <span class="pend-chip">{{ a }}</span>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="pend-ok" style="margin-top:6px">✓ Todos os alunos completaram</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+    <div class="empty-state" style="padding:24px">
+      <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66
+        0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5
+        8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0
+        c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      <p>Selecione uma turma para ver os pendentes.</p>
+    </div>
+  {% endif %}
+</div>
+
+{% else %}
+  <div class="card">
+    <div class="empty-state" style="padding:48px">
+      <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66
+        0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5
+        8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0
+        c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      <p>Selecione uma turma para começar.</p>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

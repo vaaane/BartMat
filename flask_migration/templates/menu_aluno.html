@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Área do Aluno — Sistema de Matemática</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange:      #FF7A2F;
+      --orange-dark: #E05A10;
+      --orange-pale: #FFF1EB;
+      --blue:        #2F9EDC;
+      --blue-dark:   #1A7FB8;
+      --blue-pale:   #EBF6FD;
+      --green:       #22C55E;
+      --green-pale:  #DCFCE7;
+      --red:         #EF4444;
+      --red-pale:    #FEF2F2;
+      --gold:        #F59E0B;
+      --gold-pale:   #FFFBEB;
+      --bg:          #F4F6FB;
+      --sidebar-bg:  #1A1A2E;
+      --sidebar-w:   260px;
+      --card:        #FFFFFF;
+      --text:        #111827;
+      --text-muted:  #6B7280;
+      --border:      #E5E7EB;
+      --radius:      14px;
+      --shadow:      0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.07);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ── Layout principal ─────────────────────────────────── */
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ══════════════════════════════════
+       SIDEBAR
+    ══════════════════════════════════ */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      flex-shrink: 0;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+
+    /* Cabeçalho sidebar */
+    .sidebar-brand {
+      padding: 28px 24px 20px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+
+    .brand-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--orange), #FF9A5C);
+      margin-bottom: 10px;
+    }
+    .brand-icon svg { width: 22px; height: 22px; fill: white; }
+
+    .brand-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -.2px;
+    }
+    .brand-sub {
+      font-size: 11px;
+      color: rgba(255,255,255,.45);
+      margin-top: 2px;
+    }
+
+    /* Info do aluno na sidebar */
+    .sidebar-student {
+      padding: 16px 24px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+
+    .turma-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,122,47,.2);
+      color: var(--orange);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      margin-bottom: 8px;
+    }
+
+    .student-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      line-height: 1.5;
+    }
+    .student-name span {
+      display: block;
+      font-size: 11px;
+      font-weight: 400;
+      color: rgba(255,255,255,.45);
+      margin-top: 1px;
+    }
+
+    /* Navegação */
+    .sidebar-nav {
+      padding: 16px 12px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.3);
+      padding: 8px 12px 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,.6);
+      text-decoration: none;
+      transition: all .18s ease;
+      cursor: pointer;
+    }
+    .nav-item svg { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
+    .nav-item:hover {
+      background: rgba(255,255,255,.07);
+      color: #fff;
+    }
+    .nav-item.active {
+      background: rgba(255,122,47,.18);
+      color: var(--orange);
+      font-weight: 600;
+    }
+    .nav-item.active svg { fill: var(--orange); }
+
+    /* Sair */
+    .sidebar-footer {
+      padding: 12px;
+      border-top: 1px solid rgba(255,255,255,.07);
+    }
+
+    .btn-sair {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 14px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(239,68,68,.12);
+      color: #FCA5A5;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background .18s;
+    }
+    .btn-sair:hover { background: rgba(239,68,68,.22); }
+    .btn-sair svg { width: 17px; height: 17px; fill: currentColor; }
+
+    /* ══════════════════════════════════
+       CONTEÚDO PRINCIPAL
+    ══════════════════════════════════ */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Header topo */
+    .topbar {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .topbar-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -.3px;
+    }
+
+    .topbar-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--orange), #FF9A5C);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* Conteúdo */
+    .content {
+      padding: 28px 32px;
+      flex: 1;
+    }
+
+    /* ── Grid de colunas ─────────────────────────────────── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* ── Seção title ─────────────────────────────────────── */
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title svg { width: 15px; height: 15px; fill: currentColor; }
+
+    /* ── Card genérico ───────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .card:last-child { margin-bottom: 0; }
+
+    /* ── Atividade liberada ──────────────────────────────── */
+    .ativ-liberada {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 20px;
+      background: linear-gradient(135deg, #EBF6FD 0%, #F0F9FF 100%);
+      border: 1.5px solid #BAE6FD;
+      border-radius: var(--radius);
+    }
+
+    .ativ-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      background: var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .ativ-icon svg { width: 26px; height: 26px; fill: #fff; }
+
+    .ativ-info { flex: 1; }
+    .ativ-info h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .ativ-info p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .btn-iniciar {
+      padding: 10px 20px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background .18s, transform .12s;
+      white-space: nowrap;
+    }
+    .btn-iniciar:hover { background: var(--blue-dark); transform: translateY(-1px); }
+    .btn-iniciar svg { width: 15px; height: 15px; fill: #fff; }
+
+    /* Sem atividade */
+    .ativ-vazia {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 20px;
+      background: var(--bg);
+      border: 1.5px dashed var(--border);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    .ativ-vazia svg { width: 22px; height: 22px; fill: var(--border); flex-shrink: 0; }
+
+    /* ── Histórico ───────────────────────────────────────── */
+    .hist-aluno-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 16px 0 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+    .hist-aluno-label svg { width: 14px; height: 14px; fill: currentColor; }
+    .hist-aluno-label:first-child { margin-top: 0; }
+
+    .hist-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      margin-bottom: 8px;
+      transition: border-color .15s;
+    }
+    .hist-row:hover { border-color: var(--blue); }
+    .hist-row:last-child { margin-bottom: 0; }
+
+    .hist-check {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--green-pale);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .hist-check svg { width: 14px; height: 14px; fill: var(--green); }
+
+    .hist-nome { flex: 1; font-size: 13px; font-weight: 600; }
+    .hist-pts  { font-size: 13px; font-weight: 700; color: var(--gold); }
+    .hist-data { font-size: 11px; color: var(--text-muted); }
+
+    .hist-vazio {
+      font-size: 13px;
+      color: var(--text-muted);
+      padding: 12px 0 4px;
+    }
+
+    /* ── Resumo de desempenho ────────────────────────────── */
+    .resumo-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .resumo-card:last-child { margin-bottom: 0; }
+
+    .resumo-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, var(--orange-pale), #fff);
+      border-bottom: 1px solid var(--border);
+    }
+    .resumo-header svg { width: 16px; height: 16px; fill: var(--orange); }
+    .resumo-header span {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+    }
+    .stat-cell {
+      background: #fff;
+      padding: 16px 8px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    .stat-value.orange { color: var(--orange); }
+    .stat-value.blue   { color: var(--blue); }
+    .stat-value.green  { color: var(--green); }
+    .stat-value.red    { color: var(--red); }
+    .stat-value.gold   { color: var(--gold); }
+
+    /* ── Atividades disponíveis ──────────────────────────── */
+    .ativ-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 0;
+    }
+
+    .ativ-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: default;
+    }
+    .ativ-chip svg { width: 14px; height: 14px; fill: var(--border); }
+
+    .ativ-chip.liberada {
+      border-color: #BAE6FD;
+      background: var(--blue-pale);
+      color: var(--blue-dark);
+    }
+    .ativ-chip.liberada svg { fill: var(--blue); }
+
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ══════════════════════════
+       SIDEBAR
+  ══════════════════════════ -->
+  <aside class="sidebar">
+
+    <div class="sidebar-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2
+          2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-3.5-7H7v-1.5h2.5l3
+          6 2-4H17V12h-2l-3 5z"/></svg>
+      </div>
+      <div class="brand-title">Sistema de Matemática</div>
+      <div class="brand-sub">Plataforma Educacional</div>
+    </div>
+
+    <div class="sidebar-student">
+      <div class="turma-badge">
+        <svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:currentColor">
+          <path d="M12 3L1 9l4 2.18V17h2v-4.82L9 13.36V17c0 1.1 1.35 2 3 2s3-.9
+            3-2v-3.64l2-1.09V17h2v-5.82L23 9 12 3z"/>
+        </svg>
+        Turma {{ turma }}
+      </div>
+      {% for aluno in alunos %}
+      <div class="student-name">
+        {{ aluno }}
+        {% if loop.first %}<span>Aluno{% if alunos|length > 1 %} 1{% endif %}</span>{% endif %}
+        {% if loop.index == 2 %}<span>Aluno 2</span>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-label">Navegação</div>
+
+      <a class="nav-item active" href="/menu_aluno">
+        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        Início
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1
+          0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1
+          9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>
+        Atividades
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9
+          12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42
+          1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28
+          2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+        Histórico
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22
+          11h-5.5v10H22V11z"/></svg>
+        Ranking
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a class="btn-sair" href="/sair">
+        <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58
+          2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        Sair da conta
+      </a>
+    </div>
+
+  </aside>
+
+  <!-- ══════════════════════════
+       CONTEÚDO
+  ══════════════════════════ -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div>
+        <div class="topbar-title">
+          Olá{% if alunos %}, {{ alunos[0] }}{% if alunos|length > 1 %} e {{ alunos[1] }}{% endif %}! 👋{% endif %}
+        </div>
+        <div class="topbar-sub">Turma {{ turma }} · Bom trabalho hoje!</div>
+      </div>
+      <div class="topbar-right">
+        {% for aluno in alunos %}
+        <div class="avatar" title="{{ aluno }}">{{ aluno[0] | upper }}</div>
+        {% endfor %}
+      </div>
+    </header>
+
+    <!-- Conteúdo -->
+    <div class="content">
+      <div class="grid-2">
+
+        <!-- ════════════════════
+             COLUNA ESQUERDA
+        ════════════════════ -->
+        <div>
+
+          <!-- Atividade liberada -->
+          <div class="card">
+            <div class="section-title" style="color:#F59E0B">
+              <svg viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>
+              Atividade Liberada
+            </div>
+
+            {% if atividade_liberada %}
+            <div class="ativ-liberada">
+              <div class="ativ-icon">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </div>
+              <div class="ativ-info">
+                <h3>{{ atividade_liberada.atividade }}</h3>
+                <p>
+                  Tipo:
+                  {% if atividade_liberada.tipo == "dia" %}do dia
+                  {% elif atividade_liberada.tipo == "anterior" %}anterior
+                  {% else %}antiga{% endif %}
+                  &nbsp;·&nbsp;
+                  {{ (atividade_liberada.tempo_maximo // 60) }} min disponíveis
+                </p>
+              </div>
+              <a href="#" class="btn-iniciar">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                Iniciar
+              </a>
+            </div>
+            {% else %}
+            <div class="ativ-vazia">
+              <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7
+                6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6
+                9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1
+                3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+              Nenhuma atividade liberada no momento. Aguarde o professor.
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Últimas atividades -->
+          <div class="card">
+            <div class="section-title" style="color:var(--orange)">
+              <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9
+                12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42
+                1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28
+                2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+              Últimas Atividades Realizadas
+            </div>
+
+            {% for aluno in alunos %}
+            <div class="hist-aluno-label" style="color:var(--text-muted)">
+              <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12
+                2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+              </svg>
+              {{ aluno }}
+            </div>
+
+            {% set hist = historico_por_aluno[aluno] %}
+            {% if hist %}
+              {% for r in hist %}
+              <div class="hist-row">
+                <div class="hist-check">
+                  <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21
+                    7l-1.41-1.41L9 16.17z"/></svg>
+                </div>
+                <div class="hist-nome">{{ r.atividade }}</div>
+                <div class="hist-pts">{{ r.pontuacao }} pts</div>
+                <div class="hist-data">{{ r.data }}</div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="hist-vazio">Nenhuma atividade realizada ainda.</div>
+            {% endif %}
+            {% endfor %}
+          </div>
+
+        </div>
+
+        <!-- ════════════════════
+             COLUNA DIREITA
+        ════════════════════ -->
+        <div>
+
+          <!-- Resumo de desempenho -->
+          <div class="card">
+            <div class="section-title" style="color:var(--blue)">
+              <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2
+                2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93
+                13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47
+                15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+              Resumo de Desempenho
+            </div>
+
+            {% for aluno in alunos %}
+            {% set r = resumo_por_aluno[aluno] %}
+            <div class="resumo-card">
+              <div class="resumo-header">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12
+                  2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                </svg>
+                <span>{{ aluno }}</span>
+              </div>
+              <div class="stats-grid">
+                <div class="stat-cell">
+                  <div class="stat-value gold">{{ r.total_pts }}</div>
+                  <div class="stat-label">Pontos</div>
+                </div>
+                <div class="stat-cell">
+                  <div class="stat-value blue">{{ r.total_ativ }}</div>
+                  <div class="stat-label">Atividades</div>
+                </div>
+                <div class="stat-cell">
+                  <div class="stat-value orange">{{ r.media_pts }}</div>
+                  <div class="stat-label">Média</div>
+                </div>
+                <div class="stat-cell">
+                  <div class="stat-value green">{{ r.total_acertos }}</div>
+                  <div class="stat-label">Acertos</div>
+                </div>
+                <div class="stat-cell">
+                  <div class="stat-value red">{{ r.total_erros }}</div>
+                  <div class="stat-label">Erros</div>
+                </div>
+                <div class="stat-cell">
+                  <div class="stat-value blue">
+                    {% if r.total_acertos + r.total_erros > 0 %}
+                      {{ ((r.total_acertos / (r.total_acertos + r.total_erros)) * 100) | round | int }}%
+                    {% else %}—{% endif %}
+                  </div>
+                  <div class="stat-label">Aproveit.</div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Atividades do sistema -->
+          <div class="card">
+            <div class="section-title" style="color:var(--text-muted)">
+              <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1
+                0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1
+                9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>
+              Atividades Disponíveis
+            </div>
+            <div class="ativ-grid">
+              {% for ativ in atividades %}
+              {% set is_lib = atividade_liberada and atividade_liberada.atividade == ativ.nome %}
+              <div class="ativ-chip {% if is_lib %}liberada{% endif %}">
+                <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1
+                  0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1
+                  9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/></svg>
+                {{ ativ.nome }}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+</body>
+</html>

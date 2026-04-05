@@ -1,0 +1,74 @@
+[
+  {
+    "pergunta": "Quantos lados tem um triângulo?",
+    "resposta": "3",
+    "alternativas": ["2", "3", "4", "5"],
+    "dificuldade": 1
+  },
+  {
+    "pergunta": "Quantos lados tem um quadrado?",
+    "resposta": "4",
+    "alternativas": ["3", "4", "5", "6"],
+    "dificuldade": 1
+  },
+  {
+    "pergunta": "Qual é a soma dos ângulos internos de um triângulo?",
+    "resposta": "180",
+    "alternativas": ["90", "180", "270", "360"],
+    "dificuldade": 1
+  },
+  {
+    "pergunta": "Qual a área de um quadrado de lado 5?",
+    "resposta": "25",
+    "alternativas": ["10", "20", "25", "30"],
+    "dificuldade": 1
+  },
+  {
+    "pergunta": "Qual o perímetro de um quadrado de lado 4?",
+    "resposta": "16",
+    "alternativas": ["8", "12", "16", "20"],
+    "dificuldade": 1
+  },
+  {
+    "pergunta": "Qual a área de um retângulo de base 6 e altura 4?",
+    "resposta": "24",
+    "alternativas": ["10", "20", "24", "28"],
+    "dificuldade": 2
+  },
+  {
+    "pergunta": "Qual o perímetro de um retângulo de base 8 e altura 3?",
+    "resposta": "22",
+    "alternativas": ["11", "22", "24", "32"],
+    "dificuldade": 2
+  },
+  {
+    "pergunta": "Qual a soma dos ângulos internos de um quadrilátero?",
+    "resposta": "360",
+    "alternativas": ["180", "270", "360", "720"],
+    "dificuldade": 2
+  },
+  {
+    "pergunta": "Qual é o raio de um círculo com diâmetro 10?",
+    "resposta": "5",
+    "alternativas": ["2", "4", "5", "10"],
+    "dificuldade": 2
+  },
+  {
+    "pergunta": "Em um triângulo retângulo com catetos 3 e 4, qual é a hipotenusa?",
+    "resposta": "5",
+    "alternativas": ["4", "5", "6", "7"],
+    "dificuldade": 3
+  },
+  {
+    "pergunta": "Qual a área de um triângulo de base 10 e altura 6?",
+    "resposta": "30",
+    "alternativas": ["16", "30", "40", "60"],
+    "dificuldade": 3
+  },
+  {
+    "pergunta": "Qual a soma dos ângulos internos de um hexágono?",
+    "resposta": "720",
+    "alternativas": ["360", "540", "720", "900"],
+    "dificuldade": 3
+  }
+]

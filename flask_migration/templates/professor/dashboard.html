@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Professor{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Visão geral do sistema · {{ total_turmas }} turmas ativas{% endblock %}
+
+{% block head %}
+<style>
+  /* ── Liberação card ── */
+  .lib-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border-radius: 9px;
+    border: 1px solid #BAE6FD; background: var(--blue-pale);
+    margin-bottom: 8px;
+  }
+  .lib-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; box-shadow: 0 0 0 3px rgba(34,197,94,.2); }
+  .lib-nome { flex: 1; font-size: 13px; font-weight: 600; }
+  .lib-meta { font-size: 11px; color: var(--text-muted); }
+
+  /* ── Alerta card ── */
+  .alerta-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 13px; border-radius: 9px;
+    border: 1px solid #FDE68A; background: var(--gold-pale);
+    margin-bottom: 8px;
+  }
+  .alerta-row svg { width: 15px; height: 15px; fill: var(--gold); flex-shrink: 0; margin-top: 1px; }
+  .alerta-texto { flex: 1; font-size: 12px; line-height: 1.5; }
+  .alerta-texto strong { color: var(--text); }
+
+  /* ── Top 5 ranking ── */
+  .rank-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 12px; border-radius: 9px;
+    border: 1px solid var(--border); background: #fff;
+    margin-bottom: 7px; font-size: 13px;
+  }
+  .rank-pos { font-size: 16px; width: 28px; text-align: center; flex-shrink: 0; }
+  .rank-nome { flex: 1; font-weight: 600; }
+  .rank-pts  { font-weight: 700; color: var(--gold); }
+
+  /* ── Últimos resultados ── */
+  .result-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 13px; border-radius: 9px;
+    border: 1px solid var(--border); background: #fff;
+    margin-bottom: 7px; font-size: 13px;
+  }
+  .result-aluno { flex: 1; }
+  .result-aluno strong { display: block; font-size: 13px; }
+  .result-aluno span   { font-size: 11px; color: var(--text-muted); }
+  .result-ativ  { font-size: 12px; color: var(--text-muted); flex: 1; }
+  .result-pts   { font-weight: 700; color: var(--gold); }
+  .result-data  { font-size: 11px; color: var(--text-muted); }
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ════════ STATS ROW ════════ -->
+<div class="grid-4" style="margin-bottom:22px">
+  <div class="stat-card">
+    <div class="stat-icon blue">
+      <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66
+        0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5
+        8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0
+        c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+    </div>
+    <div>
+      <div class="stat-value blue">{{ total_alunos }}</div>
+      <div class="stat-meta">Alunos cadastrados</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon orange">
+      <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1
+        0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2
+        v-4H9V9h4V5h2v4h4v2z"/></svg>
+    </div>
+    <div>
+      <div class="stat-value orange">{{ total_result }}</div>
+      <div class="stat-meta">Atividades realizadas</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon green">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48
+        10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+    </div>
+    <div>
+      <div class="stat-value green">{{ liberadas|length }}</div>
+      <div class="stat-meta">Atividades liberadas</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon {% if total_alertas > 0 %}red{% else %}purple{% endif %}">
+      <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V11
+        c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6
+        7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+    </div>
+    <div>
+      <div class="stat-value {% if total_alertas > 0 %}red{% else %}purple{% endif %}">{{ total_alertas }}</div>
+      <div class="stat-meta">Alertas pendentes</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ GRID PRINCIPAL ════════ -->
+<div class="grid-2">
+
+  <!-- ════ COLUNA ESQUERDA ════ -->
+  <div>
+
+    <!-- Atividades liberadas agora -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title" style="color:var(--green)">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10
+            10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          Atividades Liberadas Agora
+        </div>
+        <a href="{{ url_for('professor.atividades') }}" class="btn btn-blue btn-sm">
+          <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          Liberar nova
+        </a>
+      </div>
+
+      {% if liberadas %}
+        {% for lib in liberadas %}
+        <div class="lib-row">
+          <div class="lib-dot"></div>
+          <div style="flex:1">
+            <div class="lib-nome">{{ lib.atividade }}</div>
+            <div class="lib-meta">
+              Turma {{ lib.turma }} · {{ lib.tipo }}
+              {% if lib.expira_em %} · Expira {{ lib.expira_em[:16] }}{% endif %}
+            </div>
+          </div>
+          <span class="badge badge-green">Ativa</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6
+            c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6
+            9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1
+            3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+          <p>Nenhuma atividade liberada no momento.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Últimos resultados -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px;color:var(--text-muted)">
+        <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9
+          12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42
+          1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28
+          2.54.72-1.21L13 13.04V8h-1z"/></svg>
+        Últimos Resultados
+      </div>
+
+      {% if ultimos %}
+        {% for r in ultimos %}
+        <div class="result-row">
+          <div class="result-aluno">
+            <strong>{{ r.aluno }}</strong>
+            <span>Turma {{ r.turma }}</span>
+          </div>
+          <div class="result-ativ">{{ r.atividade }}</div>
+          <div class="result-pts">{{ r.pontuacao }} pts</div>
+          <div class="result-data">{{ r.data }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2
+            2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93
+            13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58
+            C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+          <p>Nenhum resultado registrado ainda.</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- ════ COLUNA DIREITA ════ -->
+  <div>
+
+    <!-- Alertas -->
+    {% if alertas %}
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px;color:var(--gold)">
+        <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V11
+          c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63
+          5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+        Alertas Pendentes
+        <span class="badge badge-red" style="margin-left:6px">{{ alertas|length }}</span>
+      </div>
+      {% for a in alertas %}
+      <div class="alerta-row">
+        <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+        <div class="alerta-texto">
+          <strong>{{ a.aluno }}</strong> (Turma {{ a.turma }}) — {{ a.motivo }}
+          <br><span style="color:var(--text-muted);font-size:10px">{{ a.data }} · {{ a.atividade }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Top 5 ranking -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px;color:var(--gold)">
+        <svg viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22
+          11h-5.5v10H22V11z"/></svg>
+        Top 5 Ranking Geral
+      </div>
+      {% set medals = ['🥇','🥈','🥉','4º','5º'] %}
+      {% for nome, pts in top5 %}
+      <div class="rank-row">
+        <div class="rank-pos">{{ medals[loop.index0] }}</div>
+        <div class="rank-nome">{{ nome }}</div>
+        <div class="rank-pts">{{ pts }} pts</div>
+      </div>
+      {% endfor %}
+      {% if not top5 %}
+      <div class="empty-state"><p>Sem dados de ranking.</p></div>
+      {% endif %}
+      <div style="margin-top:10px">
+        <a href="{{ url_for('professor.ranking') }}" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center">
+          Ver ranking completo →
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
