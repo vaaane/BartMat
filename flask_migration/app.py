@@ -6,9 +6,11 @@ import sys, os
 
 # Coloca o diretório raiz do projeto no path para que
 # todos os blueprints possam importar constants, controllers etc.
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
+FLASK_DIR    = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(FLASK_DIR)
+for _p in (PROJECT_ROOT, FLASK_DIR):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 from flask import Flask
 from blueprints.auth      import auth_bp
